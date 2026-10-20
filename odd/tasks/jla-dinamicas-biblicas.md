@@ -182,3 +182,11 @@ Lecciones de verificación (dos fallos del propio test, no de la app):
 - La primera aserción comprobaba el texto de la tabla de soluciones, que muestra el texto **actual** de la palabra: no probaba nada sobre lo ubicado. Reemplazada por `data-word`, que falla si el motor usa la palabra vieja.
 
 Evidencia: `node --test tests/*.test.mjs` → 88/88 (4 pruebas nuevas en `tests/stale-word.test.mjs`); `node tests/browser-smoke.mjs` → 23/23 (nueva verificación: «la cuadrícula regenerada ubica la palabra editada, no la anterior»).
+
+**L14** — El smoke de L13 pasó local y falló contra el sitio publicado. No era el despliegue: era el test midiendo un estado **transitorio** (el aviso inmediato y la etiqueta «Actualizar la cuadrícula» mientras se tipea) que el autoguardado de 800 ms puede adelantar. En local las aserciones entraban antes del guardado; contra Pages, latencia mediante, no.
+
+Corrección: el smoke verifica solo el estado **estable** (las variantes se descartaron, el aviso persistente aparece, el veredicto viejo de requisitos se limpió). La regla que sostiene el aviso transitorio (`variantCoversWords` falso ⇒ cuadrícula desactualizada) ya está cubierta por unitarios, y el estado transitorio queda documentado como no verificable de forma determinista sin congelar relojes.
+
+Lección: un test que compite con el debounce de la aplicación es flaky por diseño. Se verifica el resultado, no el parpadeo intermedio.
+
+Verificación: 23/23 local y 23/23 contra `https://d-yanez.github.io/jla-dinamicas-biblicas/`.
