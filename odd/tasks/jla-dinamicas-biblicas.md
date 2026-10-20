@@ -289,3 +289,16 @@ Implementación prevista: **WebAudio sintetizado** (oscilador + envolvente) en u
 Se extrajo un único `buildHints({ store, index, rerender })` para que palabras y desempates no tengan dos editores de pistas que se puedan desincronizar.
 
 Evidencia: `node --test tests/*.test.mjs` → 125/125 (2 pruebas nuevas); `node tests/browser-smoke.mjs` → 35/35 (nueva verificación: agregar una pista al desempate 1 y comprobar en la base que quedó guardada).
+
+**L23** — Decisión del usuario sobre música de fondo «tipo Kahoot». Preguntó explícitamente por música de suspenso de fondo; se le explicaron las tres restricciones (licencia propietaria del tema de Kahoot, peso y caché offline, arranque por interacción) y eligió **capa de tensión sintetizada**.
+
+Alcance cerrado para la fase 4:
+- **Pulso sintetizado con WebAudio**: sin archivos, sin licencia, sin peso en el repo.
+- Intensidad baja durante la ronda; **acelera y sube en los últimos 10 segundos** (refuerza el tic de los últimos 5).
+- **Volumen propio**, independiente de la campana y el tic.
+- **Se corta al pausar y al llegar a `00:00`**, y no suena en la pantalla de pausa de presentación.
+- Arranca con la primera interacción del moderador (restricción del navegador).
+
+Descartado: incluir el tema de Kahoot (propietario) y agregar un loop libre (no había archivo ni licencia confirmada). Si más adelante se aporta un loop CC0, entra por un solo punto de cambio sin tocar el resto del audio.
+
+Queda junto a L21: el set del documento (campana inicial, tic, campana final, volumen 30 % ajustable, silencio con `M`, probar sonido) sigue vigente y la tensión sintetizada se suma como capa opcional, activada por defecto.
