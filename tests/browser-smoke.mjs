@@ -550,6 +550,29 @@ try {
 		);
 	});
 
+	await step("regenerar todos aplica la dificultad elegida a los trece anagramas", async () => {
+		const savedAfter = async (previous) =>
+			page.waitForFunction(
+				(before) => {
+					const node = document.querySelector(".save-indicator");
+					return Boolean(node) && node.textContent.startsWith("Guardado") && node.textContent !== before;
+				},
+				previous,
+				{ timeout: 8000 },
+			);
+		await page.getByLabel("Dificultad del anagrama").selectOption("facil");
+		await savedAfter(await page.locator(".save-indicator").textContent());
+		await page.getByRole("button", { name: "Regenerar todos los anagramas", exact: true }).click();
+		await savedAfter(await page.locator(".save-indicator").textContent());
+		assert.equal(
+			await page.locator('.word-row__status[data-ok="true"]').count(),
+			13,
+			"los trece anagramas deben seguir válidos",
+		);
+		const first = await page.locator('input[aria-label="Anagrama 1"]').inputValue();
+		assert.equal(first[0], "O", "en fácil la primera letra queda anclada (ORACION)");
+	});
+
 	await step("un navegador con la marca de siembra antigua recibe el ejemplo nuevo", async () => {
 		// Reproduce the reported state: the phase-2 global marker and only the sopa example.
 		await page.evaluate(async () => {

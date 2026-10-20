@@ -317,3 +317,9 @@ El techo de letras en su lugar es lo que impide que vuelva a salir un «REPDON»
 Palabras de dos letras: el único anagrama posible no tiene anclas; queda documentado y el moderador lo resuelve no usando descubrimientos ahí.
 
 Evidencia: `node --test tests/*.test.mjs` → 132/132 (7 pruebas nuevas en `tests/anagram-difficulty.test.mjs`, incluida la ventana de cada nivel sobre siete palabras y cinco semillas); `node tests/browser-smoke.mjs` → 36/36 (nueva verificación: elegir Difícil, regenerar y comprobar que se guarda y que los trece anagramas siguen válidos).
+
+**L25** — Pregunta del usuario al validar: «¿ese valor dónde se cambia después?». La dificultad del anagrama vive en el editor de palabras desordenadas, por actividad, junto a «Descubrimientos por palabra». Cambiarla **no** re-mezcla lo ya generado, y regenerar trece anagramas a mano era tedioso, así que se agregó **«Regenerar todos los anagramas»**: aplica el nivel elegido a las diez palabras y a los tres desempates en una sola acción, omite las entradas cuya solución está vacía o es inválida y avisa cuántas regeneró y cuántas omitió.
+
+Decisión: la acción es explícita y sin confirmación, porque el usuario la pide con un clic y el resultado se revierte regenerando de nuevo; no se destruye nada irrecuperable.
+
+Evidencia: 132/132 unitarias; `node tests/browser-smoke.mjs` → 37/37 (nueva verificación: elegir Fácil, regenerar todo, exigir trece anagramas válidos y que el primero conserve la primera letra anclada).

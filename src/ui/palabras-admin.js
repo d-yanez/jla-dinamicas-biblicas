@@ -180,6 +180,33 @@ function createGameSection({ session }) {
 		return box;
 	}
 
+	/** Regenerates every anagram (words and tiebreakers) with the chosen difficulty. */
+	function regenerateAllAnagrams() {
+		const draft = currentDraft();
+		const difficulty = draft.anagramDifficulty ?? DEFAULT_ANAGRAM_DIFFICULTY;
+		let regenerated = 0;
+		let skipped = 0;
+		for (const store of ["words", "tiebreakers"]) {
+			for (const entry of draft.game[store] ?? []) {
+				const generated = generateAnagram({ solution: entry.solution, seed: createId(), difficulty });
+				if (!generated.ok) {
+					skipped += 1;
+					continue;
+				}
+				entry.anagram = generated.anagram;
+				regenerated += 1;
+			}
+		}
+		session.setNotice(
+			skipped > 0
+				? `Se regeneraron ${regenerated} anagramas con la dificultad elegida. ${skipped} quedaron sin cambios: su solución está vacía o no es válida.`
+				: `Se regeneraron ${regenerated} anagramas con la dificultad elegida.`,
+		);
+		session.markDirty();
+		renderWords();
+		renderTiebreakers();
+	}
+
 	function renderDifficultyField() {
 		const draft = currentDraft();
 		const id = "campo-dificultad";
@@ -206,6 +233,11 @@ function createGameSection({ session }) {
 				"p",
 				{ class: "field__hint" },
 				"Fácil ancla la primera letra y otra más; Media ancla solo la primera; Difícil no ancla ninguna. Se aplica al regenerar.",
+			),
+			el(
+				"button",
+				{ class: "btn btn--ghost btn--small", type: "button", onclick: () => regenerateAllAnagrams() },
+				"Regenerar todos los anagramas",
 			),
 		);
 	}
