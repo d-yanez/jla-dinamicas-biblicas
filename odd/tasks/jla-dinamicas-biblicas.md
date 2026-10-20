@@ -233,3 +233,15 @@ Evidencia: `node --test tests/*.test.mjs` → 106/106 (18 pruebas nuevas de anag
 Lección de proceso: después de un deploy, **esperar la propagación antes de correr la verificación contra la URL pública**. El SHA de `/deployments` confirma que el despliegue terminó, no que el CDN ya sirva todos los archivos nuevos. Para el desarrollo diario, el smoke local sigue siendo la verificación primaria; el remoto valida el despliegue (rutas, MIME, HTTPS), no la lógica.
 
 Evidencia final: 28/28 local y 28/28 contra `https://d-yanez.github.io/jla-dinamicas-biblicas/` en dos corridas consecutivas.
+
+**L18** — Bug reportado por el usuario al validar la fase 3: la sección «Palabras desordenadas» decía «Todavía no hay actividades», aun estando desplegado el ejemplo.
+
+Causa raíz: la siembra usaba **una única marca global** (`examplesSeededAt`) y se cortaba con `if (existing.length > 0) return`. El navegador del usuario ya tenía esa marca desde la fase 2 —cuando el único ejemplo era la sopa—, así que el ejemplo agregado en la fase 3 **nunca llegó a su dispositivo**. Un lector nuevo sí lo recibía, por eso el smoke en contexto limpio pasaba: el test no podía ver el defecto.
+
+Corrección:
+1. **Siembra por ejemplo**: cada ejemplo lleva `exampleKey` estable (`sopa-ayuno-oracion`, `palabras-ayuno-oracion`); se siembra el que falte según la lista `examplesSeeded`. Así los ejemplos de fases futuras llegan a navegadores existentes sin duplicar los que ya están.
+2. **Migración de la marca vieja**: si existe `examplesSeededAt` y no la lista nueva, se asume sembrado solo el ejemplo de sopa.
+3. **Una copia no es el ejemplo**: `duplicateAsDraft` limpia `exampleKey`, así duplicar no bloquea la siembra. `normalizeActivity` conserva la marca al leer.
+4. **Nueva verificación de navegador** que reproduce el estado exacto del usuario (borra el ejemplo de palabras, borra la lista y deja la marca antigua), recarga y exige que el ejemplo reaparezca. Sin esa prueba, el defecto era invisible.
+
+Evidencia: `node --test tests/*.test.mjs` → 113/113 (7 pruebas nuevas en `tests/examples.test.mjs`); `node tests/browser-smoke.mjs` → 29/29.

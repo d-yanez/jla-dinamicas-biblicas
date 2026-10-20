@@ -377,6 +377,36 @@ try {
 		assert.equal(await page.locator('input[aria-label="Pista 1 de la palabra 3"]').inputValue(), "Pista editada en la prueba");
 	});
 
+	await step("un navegador con la marca de siembra antigua recibe el ejemplo nuevo", async () => {
+		// Reproduce the reported state: the phase-2 global marker and only the sopa example.
+		await page.evaluate(async () => {
+			const db = await new Promise((resolve, reject) => {
+				const request = indexedDB.open("jla-dinamicas");
+				request.onsuccess = () => resolve(request.result);
+				request.onerror = () => reject(request.error);
+			});
+			await new Promise((resolve, reject) => {
+				const tx = db.transaction(["activities", "settings"], "readwrite");
+				const activities = tx.objectStore("activities");
+				const settings = tx.objectStore("settings");
+				const getAll = activities.getAll();
+				getAll.onsuccess = () => {
+					for (const row of getAll.result) if (row.type === "palabras") activities.delete(row.id);
+					settings.delete("examplesSeeded");
+					settings.put({ key: "examplesSeededAt", value: new Date().toISOString() });
+				};
+				tx.oncomplete = resolve;
+				tx.onerror = () => reject(tx.error);
+			});
+		});
+		await page.reload();
+		await page.getByRole("heading", { name: "Panel de administración" }).waitFor();
+		await page.locator('input[inputmode="numeric"]').first().fill("5678");
+		await page.getByRole("button", { name: "Entrar" }).click();
+		await page.getByRole("link", { name: "Palabras desordenadas", exact: true }).click();
+		await page.locator(".activity-row").filter({ hasText: "Palabras desordenadas: Ayuno y oración" }).waitFor({ timeout: 8000 });
+	});
+
 	await step("en móvil no hay desborde horizontal y las tarjetas se apilan", async () => {
 		const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
 		const mobilePage = await mobileContext.newPage();

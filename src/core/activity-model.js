@@ -45,6 +45,9 @@ export function createActivity({ type = ACTIVITY_TYPE.SOPA, name = "" } = {}) {
 	return {
 		id: createId(),
 		schema: 1,
+		// Set only on the activities the app ships with, so seeding can tell an example
+		// from a copy or from the moderator's own work.
+		exampleKey: "",
 		type,
 		status: ACTIVITY_STATUS.DRAFT,
 		name,
@@ -216,6 +219,7 @@ export function normalizeActivity(value) {
 	const base = createActivity({ type });
 	const activity = { ...base };
 	if (typeof value.id === "string" && value.id.length > 0) activity.id = value.id;
+	if (typeof value.exampleKey === "string" && value.exampleKey.length > 0) activity.exampleKey = value.exampleKey;
 	for (const field of TEXT_FIELDS) {
 		if (typeof value[field] === "string") activity[field] = value[field];
 	}
@@ -293,6 +297,7 @@ export function duplicateAsDraft(activity) {
 	const copy = {
 		...source,
 		id: createId(),
+		exampleKey: "",
 		status: ACTIVITY_STATUS.DRAFT,
 		name: `${source.name} (copia)`,
 		testedAt: "",

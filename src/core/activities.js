@@ -19,6 +19,10 @@ import { generateVariant } from "./sopa.js";
 const SETTINGS_STORE = "settings";
 const ACTIVITIES_STORE = "activities";
 const EXAMPLES_KEY = "examplesSeededAt";
+const SEEDED_KEYS_KEY = "examplesSeeded";
+
+/** Stable keys of the examples the app ships with, in seeding order. */
+export const EXAMPLE_KEYS = Object.freeze(["sopa-ayuno-oracion", "palabras-ayuno-oracion"]);
 
 /** All stored activities, newest first. */
 export async function listActivities(db, { type } = {}) {
@@ -78,6 +82,7 @@ const PALABRAS_TIEBREAKERS = ["Misericordia", "Perseverancia", "Bendición"];
 
 function buildSopaExample() {
 	const activity = createActivity({ type: ACTIVITY_TYPE.SOPA, name: "Sopa de letras: Ayuno y oración" });
+	activity.exampleKey = EXAMPLE_KEYS[0];
 	activity.theme = "Ayuno y oración";
 	// References only: a quotation would have to be checked literally against RVR1960,
 	// and it is better to point to the passage than to paraphrase it as if it were quoted.
@@ -102,6 +107,7 @@ function buildSopaExample() {
 
 function buildPalabrasExample() {
 	const activity = createActivity({ type: ACTIVITY_TYPE.PALABRAS, name: "Palabras desordenadas: Ayuno y oración" });
+	activity.exampleKey = EXAMPLE_KEYS[1];
 	activity.theme = "Ayuno y oración";
 	activity.reference = "Mateo 6:16-18";
 	activity.teaching = "El ayuno y la oración nos ayudan a buscar a Dios con atención y humildad, sin buscar la mirada de los demás.";
@@ -132,21 +138,39 @@ export function buildExampleActivities() {
 }
 
 /**
- * Seeds the editable examples on first start. Both are drafts, never published; the
- * settings flag keeps them from coming back if the moderator deletes them on purpose.
+ * Examples still missing from a database. Seeding is tracked per example key, not with a
+ * single global flag: a browser that stored the phase-2 marker (when the sopa was the
+ * only example) must still receive the examples added in later phases.
+ */
+export function pendingExamples({ activities = [], seededKeys = [] } = {}) {
+	const seeded = new Set((seededKeys ?? []).filter((key) => typeof key === "string"));
+	const present = new Set(
+		(activities ?? []).map((activity) => activity?.exampleKey).filter((key) => typeof key === "string" && key.length > 0),
+	);
+	return buildExampleActivities().filter((example) => !seeded.has(example.exampleKey) && !present.has(example.exampleKey));
+}
+
+/**
+ * Seeds the editable examples that are still missing. They are drafts, never published,
+ * and the per-example key keeps them from coming back if the moderator removes one.
  */
 export async function ensureExampleActivities(db) {
-	const seededAt = await readSetting(db, EXAMPLES_KEY);
-	if (typeof seededAt === "string" && seededAt.length > 0) return [];
-	const existing = await listActivities(db);
-	if (existing.length > 0) {
-		await writeSetting(db, EXAMPLES_KEY, new Date().toISOString());
-		return [];
+	const [storedKeys, legacyFlag] = await Promise.all([readSetting(db, SEEDED_KEYS_KEY), readSetting(db, EXAMPLES_KEY)]);
+	const seededKeys = new Set(Array.isArray(storedKeys) ? storedKeys.filter((key) => typeof key === "string") : []);
+	// Migration from the single global flag used before this fix: it only ever seeded
+	// the sopa example.
+	if (!Array.isArray(storedKeys) && typeof legacyFlag === "string" && legacyFlag.length > 0) {
+		seededKeys.add(EXAMPLE_KEYS[0]);
 	}
-	const examples = buildExampleActivities();
-	for (const example of examples) await putRow(db, ACTIVITIES_STORE, example);
-	await writeSetting(db, EXAMPLES_KEY, new Date().toISOString());
-	return examples;
+	const activities = await listActivities(db);
+	const pending = pendingExamples({ activities, seededKeys: [...seededKeys] });
+	for (const example of pending) {
+		await putRow(db, ACTIVITIES_STORE, example);
+		seededKeys.add(example.exampleKey);
+	}
+	if (pending.length > 0) await writeSetting(db, EXAMPLES_KEY, new Date().toISOString());
+	if (pending.length > 0 || !Array.isArray(storedKeys)) await writeSetting(db, SEEDED_KEYS_KEY, [...seededKeys]);
+	return pending;
 }
 
 export { SETTINGS_STORE };
