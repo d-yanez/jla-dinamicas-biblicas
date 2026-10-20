@@ -269,3 +269,17 @@ Implementación:
 - El editor muestra un selector 0–2 y, por palabra, la vista previa enmascarada (`Descubrimiento 2: A _ U _ O N`).
 
 Evidencia: `node --test tests/*.test.mjs` → 123/123 (8 pruebas nuevas en `tests/reveals.test.mjs`); `node tests/browser-smoke.mjs` → 34/34 (2 nuevas: configuración con vista previa y persistencia del nivel y las posiciones).
+
+**L21** — Decisión del usuario sobre el audio (fase 4): **set del documento, sin agregados**.
+
+Alcance cerrado, tomado de §8:
+- **Campana inicial** al empezar la ronda.
+- **Tic en los últimos cinco segundos**, suave y con intensidad creciente.
+- **Campana final** al llegar a `00:00`.
+- **Volumen 30 % por defecto**, ajustable; **silencio** con `M`.
+- **Probar sonido** desde preparación.
+- Arranque del contexto de audio en la primera interacción del usuario (restricción del navegador), nunca al cargar.
+
+Descartado explícitamente por el usuario: sonido al revelar pistas/descubrimientos y colchón de ambiente. Motivo registrado: en la sala la música compite con la voz del moderador; el suspenso lo producen el tic y la pausa, no la música.
+
+Implementación prevista: **WebAudio sintetizado** (oscilador + envolvente) en un módulo `audio.js`, sin archivos ni CDN: cero peso en el repo y disponible offline desde el primer uso. Si más adelante se prefiere una campana real, el reemplazo son dos archivos cortos y un punto de cambio.
