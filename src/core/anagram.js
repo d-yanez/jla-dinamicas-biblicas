@@ -19,9 +19,10 @@ export const MAX_REVEALS = 2;
 
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 
-const SHUFFLE_ATTEMPTS = 300;
-// A one-swap scramble is too easy to spot; prefer moving at least two letters.
-const PREFERRED_CHANGED_POSITIONS = 2;
+export const ANAGRAM_DIFFICULTIES = Object.freeze(["facil", "media", "dificil"]);
+export const DEFAULT_ANAGRAM_DIFFICULTY = "media";
+
+const SHUFFLE_ATTEMPTS = 400;
 
 /** Solvable word: same normalization as the grid, but at least two letters. */
 export function normalizeSolution(value) {
@@ -99,32 +100,56 @@ export function checkAnagramPair({ solution, anagram } = {}) {
 	return { ok: true, solution: normalizedSolution, anagram: normalizedAnagram };
 }
 
-function changedPositions(left, right) {
-	let changed = 0;
-	for (let index = 0; index < left.length; index += 1) if (left[index] !== right[index]) changed += 1;
-	return changed;
+function inPlaceCount(candidate, solution) {
+	let count = 0;
+	for (let index = 0; index < solution.length; index += 1) if (candidate[index] === solution[index]) count += 1;
+	return count;
+}
+
+/**
+ * How many letters may stay in their original position, per level.
+ *
+ * "media" anchors only the first letter: the eye gets a place to start without reading
+ * the word. "facil" keeps at least two letters in place, and "dificil" allows almost
+ * none. The upper bound is what prevents a scramble that reads like the word itself.
+ */
+function difficultyWindow(difficulty, length) {
+	if (difficulty === "facil") return { min: 2, max: Math.max(2, Math.ceil(length / 2)) };
+	if (difficulty === "dificil") return { min: 0, max: 1 };
+	return { min: 1, max: Math.max(1, Math.ceil(length / 3)) };
 }
 
 /**
  * Builds a deterministic scramble from a seed. Returns an error when no anagram can be
  * different from the solution (every letter identical), instead of a trivial one.
  */
-export function generateAnagram({ solution, seed } = {}) {
+export function generateAnagram({ solution, seed, difficulty = DEFAULT_ANAGRAM_DIFFICULTY } = {}) {
 	const normalized = normalizeSolution(solution);
 	if (normalized === undefined) {
 		return { ok: false, error: `La solución debe ser una palabra de ${MIN_SOLUTION_LENGTH} a 20 letras.` };
 	}
+	const mode = ANAGRAM_DIFFICULTIES.includes(difficulty) ? difficulty : DEFAULT_ANAGRAM_DIFFICULTY;
 	const seedText = typeof seed === "string" && seed.trim().length > 0 ? seed.trim() : normalized;
-	const prng = createPrng(hashSeed(`${seedText}#anagram`));
+	const prng = createPrng(hashSeed(`${seedText}#${mode}#anagram`));
 	const letters = [...normalized];
-	let fallback;
+	const length = letters.length;
+	// Anchoring the first letter gives the eye a place to start; the hard level removes it.
+	const anchorFirst = mode !== "dificil" && length > 2;
+	const window = difficultyWindow(mode, length);
+	let best;
 	for (let attempt = 0; attempt < SHUFFLE_ATTEMPTS; attempt += 1) {
-		const shuffled = prng.shuffle(letters).join("");
-		if (shuffled === normalized) continue;
-		if (changedPositions(shuffled, normalized) >= PREFERRED_CHANGED_POSITIONS) return { ok: true, anagram: shuffled };
-		if (fallback === undefined) fallback = shuffled;
+		const candidate = anchorFirst
+			? letters[0] + prng.shuffle(letters.slice(1)).join("")
+			: prng.shuffle(letters).join("");
+		if (candidate === normalized) continue;
+		const inPlace = inPlaceCount(candidate, normalized);
+		if (inPlace >= window.min && inPlace <= window.max) return { ok: true, anagram: candidate };
+		// Keep the closest attempt: a short word can have a very narrow window.
+		if (best === undefined || Math.abs(inPlace - window.min) < Math.abs(best.inPlace - window.min)) {
+			best = { anagram: candidate, inPlace };
+		}
 	}
-	if (fallback !== undefined) return { ok: true, anagram: fallback };
+	if (best !== undefined) return { ok: true, anagram: best.anagram };
 	return {
 		ok: false,
 		error: `No se puede generar un anagrama distinto de ${normalized}: todas sus letras son iguales.`,

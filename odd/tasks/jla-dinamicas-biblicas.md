@@ -302,3 +302,18 @@ Alcance cerrado para la fase 4:
 Descartado: incluir el tema de Kahoot (propietario) y agregar un loop libre (no había archivo ni licencia confirmada). Si más adelante se aporta un loop CC0, entra por un solo punto de cambio sin tocar el resto del audio.
 
 Queda junto a L21: el set del documento (campana inicial, tic, campana final, volumen 30 % ajustable, silencio con `M`, probar sonido) sigue vigente y la tensión sintetizada se suma como capa opcional, activada por defecto.
+
+**L24** — Calibración de dificultad del anagrama, pedida por el usuario («¿qué complejidad tiene? ¿es normal para 1 min?»).
+
+Medición del algoritmo anterior (azar uniforme + dos guardas): no había nivel, había **varianza**. Con las mismas palabras del ejemplo: `PERDON` salía `REPDON` (4 de 6 letras en su lugar, se leía casi completo) mientras `PERSEVERANCIA` salía `AVPIERNECRSAE` (13 letras sin ningún punto de apoyo). Además la misma palabra cambiaba de dificultad según la semilla: entre 0 y 3 letras en su lugar.
+
+Corrección — tres niveles elegidos por el usuario, **por actividad** (`anagramDifficulty`, por defecto `media`):
+- **Fácil**: primera letra anclada y al menos dos letras en su lugar, con techo de la mitad del largo.
+- **Media**: solo la primera letra anclada; techo de un tercio en su lugar.
+- **Difícil**: sin ancla inicial y como máximo una letra quieta.
+
+El techo de letras en su lugar es lo que impide que vuelva a salir un «REPDON». La generación es determinista por (semilla, nivel), el nivel se guarda con la actividad y **no** entra en la firma de contenido relevante: solo afecta a la próxima regeneración, no a lo ya generado.
+
+Palabras de dos letras: el único anagrama posible no tiene anclas; queda documentado y el moderador lo resuelve no usando descubrimientos ahí.
+
+Evidencia: `node --test tests/*.test.mjs` → 132/132 (7 pruebas nuevas en `tests/anagram-difficulty.test.mjs`, incluida la ventana de cada nivel sobre siete palabras y cinco semillas); `node tests/browser-smoke.mjs` → 36/36 (nueva verificación: elegir Difícil, regenerar y comprobar que se guarda y que los trece anagramas siguen válidos).

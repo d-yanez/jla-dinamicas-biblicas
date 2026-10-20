@@ -515,6 +515,41 @@ try {
 		assert.deepEqual(stored, ["Perdona de corazón"], "la pista del desempate debe quedar guardada");
 	});
 
+	await step("la dificultad del anagrama se configura por actividad", async () => {
+		const savedAfter = async (previous) =>
+			page.waitForFunction(
+				(before) => {
+					const node = document.querySelector(".save-indicator");
+					return Boolean(node) && node.textContent.startsWith("Guardado") && node.textContent !== before;
+				},
+				previous,
+				{ timeout: 8000 },
+			);
+		await page.getByLabel("Dificultad del anagrama").selectOption("dificil");
+		await savedAfter(await page.locator(".save-indicator").textContent());
+		await page.getByRole("button", { name: "Regenerar anagrama 1", exact: true }).click();
+		await savedAfter(await page.locator(".save-indicator").textContent());
+		const stored = await page.evaluate(async () => {
+			const db = await new Promise((resolve, reject) => {
+				const request = indexedDB.open("jla-dinamicas");
+				request.onsuccess = () => resolve(request.result);
+				request.onerror = () => reject(request.error);
+			});
+			const tx = db.transaction("activities", "readonly");
+			const all = tx.objectStore("activities").getAll();
+			const rows = await new Promise((resolve) => {
+				all.onsuccess = () => resolve(all.result);
+			});
+			return rows.find((row) => row.type === "palabras")?.anagramDifficulty;
+		});
+		assert.equal(stored, "dificil", "la dificultad se guarda con la actividad");
+		assert.equal(
+			await page.locator('.word-row__status[data-ok="true"]').count(),
+			13,
+			"regenerar con otro nivel no invalida ningún anagrama",
+		);
+	});
+
 	await step("un navegador con la marca de siembra antigua recibe el ejemplo nuevo", async () => {
 		// Reproduce the reported state: the phase-2 global marker and only the sopa example.
 		await page.evaluate(async () => {

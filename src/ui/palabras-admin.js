@@ -7,6 +7,8 @@
 
 import { ACTIVITY_TYPE, PALABRAS_WORD_COUNT } from "../core/activity-model.js";
 import {
+	ANAGRAM_DIFFICULTIES,
+	DEFAULT_ANAGRAM_DIFFICULTY,
 	HINT_MAX_LENGTH,
 	MAX_HINTS,
 	MAX_REVEALS,
@@ -54,7 +56,11 @@ function createGameSection({ session }) {
 	function regenerate(store, index, anagramInput, status) {
 		const entry = currentDraft().game[store][index];
 		if (!entry) return;
-		const generated = generateAnagram({ solution: entry.solution, seed: createId() });
+		const generated = generateAnagram({
+			solution: entry.solution,
+			seed: createId(),
+			difficulty: currentDraft().anagramDifficulty ?? DEFAULT_ANAGRAM_DIFFICULTY,
+		});
 		if (!generated.ok) {
 			session.setNotice(generated.error);
 			return;
@@ -174,6 +180,36 @@ function createGameSection({ session }) {
 		return box;
 	}
 
+	function renderDifficultyField() {
+		const draft = currentDraft();
+		const id = "campo-dificultad";
+		const labels = { facil: "Fácil", media: "Media (recomendada)", dificil: "Difícil" };
+		const select = el(
+			"select",
+			{ class: "input", id },
+			...ANAGRAM_DIFFICULTIES.map((value) =>
+				el("option", { value, selected: (draft.anagramDifficulty ?? DEFAULT_ANAGRAM_DIFFICULTY) === value }, labels[value] ?? value),
+			),
+		);
+		select.addEventListener("change", () => {
+			const current = currentDraft();
+			current.anagramDifficulty = ANAGRAM_DIFFICULTIES.includes(select.value) ? select.value : DEFAULT_ANAGRAM_DIFFICULTY;
+			session.markDirty();
+			renderWords();
+		});
+		return el(
+			"div",
+			{ class: "field" },
+			el("label", { class: "field__label", for: id }, "Dificultad del anagrama"),
+			select,
+			el(
+				"p",
+				{ class: "field__hint" },
+				"Fácil ancla la primera letra y otra más; Media ancla solo la primera; Difícil no ancla ninguna. Se aplica al regenerar.",
+			),
+		);
+	}
+
 	function renderWords() {
 		const activity = currentDraft();
 		clear(wordsBox);
@@ -208,7 +244,7 @@ function createGameSection({ session }) {
 					"Agregar palabra",
 				),
 			),
-			renderRevealsField(),
+			el("div", { class: "field-grid" }, renderRevealsField(), renderDifficultyField()),
 		);
 		const list = el("ol", { class: "word-list" });
 		activity.game.words.forEach((word, index) => {

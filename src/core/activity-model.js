@@ -3,6 +3,8 @@
 // words change, «probado» invalidated when relevant content changes).
 
 import {
+	ANAGRAM_DIFFICULTIES,
+	DEFAULT_ANAGRAM_DIFFICULTY,
 	HINT_MAX_LENGTH,
 	MAX_HINTS,
 	MAX_REVEALS,
@@ -71,6 +73,9 @@ export function createActivity({ type = ACTIVITY_TYPE.SOPA, name = "" } = {}) {
 		// "Descubrimientos" per word for this activity (0-2). Words only: tiebreakers are
 		// resolved by the moderator without the projector.
 		letterReveals: 0,
+		// How scrambled the anagrams are. Only affects the next regeneration, so it is not
+		// part of the relevant-content signature.
+		anagramDifficulty: DEFAULT_ANAGRAM_DIFFICULTY,
 		testedAt: "",
 		testedSignature: "",
 		publishedAt: "",
@@ -245,6 +250,9 @@ export function normalizeActivity(value) {
 	activity.roundSeconds = isRoundSeconds(value.roundSeconds) ? value.roundSeconds : ROUND_SECONDS.default;
 	activity.letterReveals =
 		Number.isInteger(value.letterReveals) && value.letterReveals >= 0 && value.letterReveals <= MAX_REVEALS ? value.letterReveals : 0;
+	activity.anagramDifficulty = ANAGRAM_DIFFICULTIES.includes(value.anagramDifficulty)
+		? value.anagramDifficulty
+		: DEFAULT_ANAGRAM_DIFFICULTY;
 	if (typeof value.testedAt === "string") activity.testedAt = value.testedAt;
 	if (typeof value.testedSignature === "string") activity.testedSignature = value.testedSignature;
 	if (typeof value.publishedAt === "string") activity.publishedAt = value.publishedAt;
