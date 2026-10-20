@@ -254,3 +254,18 @@ Evidencia: `node --test tests/*.test.mjs` → 113/113 (7 pruebas nuevas en `test
 Verificación nueva (sin la cual estos dos defectos eran invisibles): agregar una pista desde cero, escribirla, editarla después de un guardado y exigir que persista tras recargar; y en sopa, editar una palabra dos veces con un guardado en el medio y leer la base para exigir el segundo valor.
 
 Evidencia: `node --test tests/*.test.mjs` → 115/115; `node tests/browser-smoke.mjs` → 32/32.
+
+**L20** — Extensión pedida por el usuario (fuera del documento maestro): **descubrimientos de letras** además de las dos pistas. Decisión tomada por recomendación del arquitecto, con el criterio de entretenimiento y suspenso que pidió el usuario.
+
+Diseño elegido: **vocales primero, después la última consonante**, configurable **por actividad (0–2)**, con revelado **manual ronda por ronda** (llega en la fase 4). Razones:
+- Revelar una letra suelta al azar (p. ej. la posición 7 de `PERSEVERANCIA`) no produce ningún momento de descubrimiento: es el peor esquema para suspenso.
+- Revelar todas las vocales convierte la ronda en una deducción colectiva («A _ U _ O») y es el mejor momento de juego; el segundo descubrimiento agrega la última consonante para que todavía quede una carta.
+- Como el revelado es manual, las palabras cortas (`FE`) no se regalan: el moderador simplemente no lo usa ahí. Esa sola decisión elimina la debilidad del esquema.
+
+Implementación:
+- `computeReveals(solution, level)` puro en `anagram.js`: nivel 1 = vocales en su posición; nivel 2 = + última consonante; sin vocales cae a la primera consonante; sin consonantes no agrega nada.
+- El modelo guarda `letterReveals` en la actividad y **las posiciones reveladas en cada palabra**. La pantalla de juego nunca las recalcula (S20): se leen como dato, igual que la cuadrícula de la sopa.
+- El nivel cuenta como contenido relevante: cambiarlo invalida el «probado».
+- El editor muestra un selector 0–2 y, por palabra, la vista previa enmascarada (`Descubrimiento 2: A _ U _ O N`).
+
+Evidencia: `node --test tests/*.test.mjs` → 123/123 (8 pruebas nuevas en `tests/reveals.test.mjs`); `node tests/browser-smoke.mjs` → 34/34 (2 nuevas: configuración con vista previa y persistencia del nivel y las posiciones).

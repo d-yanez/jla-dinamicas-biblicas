@@ -2,7 +2,15 @@
 // validation, and the rules that keep a draft honest (variants invalidated when their
 // words change, «probado» invalidated when relevant content changes).
 
-import { MAX_HINTS, HINT_MAX_LENGTH, TIEBREAKER_COUNT, checkAnagramPair, normalizeSolution } from "./anagram.js";
+import {
+	HINT_MAX_LENGTH,
+	MAX_HINTS,
+	MAX_REVEALS,
+	TIEBREAKER_COUNT,
+	checkAnagramPair,
+	computeReveals,
+	normalizeSolution,
+} from "./anagram.js";
 import { createId } from "./ids.js";
 import { normalizeWord, wordText } from "./letters.js";
 import { SOPA_SIZE, SOPA_WORD_COUNT, verifyVariant } from "./sopa.js";
@@ -60,6 +68,9 @@ export function createActivity({ type = ACTIVITY_TYPE.SOPA, name = "" } = {}) {
 		eventName: "",
 		eventDate: "",
 		roundSeconds: ROUND_SECONDS.default,
+		// "Descubrimientos" per word for this activity (0-2). Words only: tiebreakers are
+		// resolved by the moderator without the projector.
+		letterReveals: 0,
 		testedAt: "",
 		testedSignature: "",
 		publishedAt: "",
@@ -98,6 +109,7 @@ export function relevantContentSignature(activity) {
 	if (activity?.type === ACTIVITY_TYPE.PALABRAS) {
 		return JSON.stringify({
 			...common,
+			letterReveals: activity?.letterReveals ?? 0,
 			words: (game.words ?? []).map((word) => [
 				normalizeSolution(word?.solution) ?? "",
 				normalizeSolution(word?.anagram) ?? "",
@@ -198,6 +210,9 @@ function normalizePalabrasEntry(value, { withHints }) {
 		anagram: typeof value?.anagram === "string" ? value.anagram : "",
 	};
 	if (withHints) entry.hints = normalizeHints(value?.hints);
+	if (Array.isArray(value?.reveals)) {
+		entry.reveals = value.reveals.filter((index) => Number.isInteger(index) && index >= 0);
+	}
 	return entry;
 }
 
@@ -227,6 +242,8 @@ export function normalizeActivity(value) {
 	}
 	activity.status = value.status === ACTIVITY_STATUS.PUBLISHED ? ACTIVITY_STATUS.PUBLISHED : ACTIVITY_STATUS.DRAFT;
 	activity.roundSeconds = isRoundSeconds(value.roundSeconds) ? value.roundSeconds : ROUND_SECONDS.default;
+	activity.letterReveals =
+		Number.isInteger(value.letterReveals) && value.letterReveals >= 0 && value.letterReveals <= MAX_REVEALS ? value.letterReveals : 0;
 	if (typeof value.testedAt === "string") activity.testedAt = value.testedAt;
 	if (typeof value.testedSignature === "string") activity.testedSignature = value.testedSignature;
 	if (typeof value.publishedAt === "string") activity.publishedAt = value.publishedAt;
@@ -255,8 +272,13 @@ function variantCoversWordsSafe(variant, validWords) {
  */
 export function refreshDerivedState(activity) {
 	if (activity?.type === ACTIVITY_TYPE.PALABRAS) {
+		const level = activity.letterReveals ?? 0;
 		const words = (activity.game?.words ?? [])
-			.map((word) => ({ ...word, normalized: normalizeSolution(word.solution) }))
+			.map((word) => ({
+				...word,
+				normalized: normalizeSolution(word.solution),
+				reveals: computeReveals(word.solution, level),
+			}))
 			.filter((word) => typeof word.normalized === "string");
 		const tiebreakers = (activity.game?.tiebreakers ?? [])
 			.map((tiebreaker) => ({ ...tiebreaker, normalized: normalizeSolution(tiebreaker.solution) }))

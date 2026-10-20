@@ -15,6 +15,9 @@ export const MIN_SOLUTION_LENGTH = 2;
 export const MAX_HINTS = 2;
 export const HINT_MAX_LENGTH = 140;
 export const TIEBREAKER_COUNT = 3;
+export const MAX_REVEALS = 2;
+
+const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 
 const SHUFFLE_ATTEMPTS = 300;
 // A one-swap scramble is too easy to spot; prefer moving at least two letters.
@@ -25,6 +28,35 @@ export function normalizeSolution(value) {
 	const normalized = normalizeWord(value);
 	if (typeof normalized !== "string" || normalized.length < MIN_SOLUTION_LENGTH) return undefined;
 	return normalized;
+}
+
+/**
+ * Positions revealed by one "descubrimiento", in order.
+ *
+ * Level 1 reveals the vowels, because the vowel skeleton turns the round into a shared
+ * guessing moment instead of an incidental hint. Level 2 adds the last consonant, so the
+ * second reveal still has something to give. A word with no vowels falls back to its
+ * first consonant; a word with no consonants simply has nothing extra to add.
+ *
+ * The result is a position list, stored with the word: the play screen never recomputes
+ * it, so a reveal cannot change between playing, restoring or reloading.
+ */
+export function computeReveals(solution, level = 1) {
+	const normalized = normalizeSolution(solution);
+	if (normalized === undefined) return [];
+	const requested = Number.isInteger(level) ? level : 0;
+	if (requested < 1) return [];
+	const vowels = [];
+	const consonants = [];
+	for (let index = 0; index < normalized.length; index += 1) {
+		if (VOWELS.has(normalized[index])) vowels.push(index);
+		else consonants.push(index);
+	}
+	const revealed = vowels.length > 0 ? [...vowels] : consonants.slice(0, 1);
+	if (requested < 2) return revealed;
+	const extra = consonants.filter((index) => !revealed.includes(index)).at(-1);
+	if (extra !== undefined) revealed.push(extra);
+	return revealed;
 }
 
 /** The sorted letters of a word, which is what "mismo multiconjunto" compares. */

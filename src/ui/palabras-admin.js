@@ -9,8 +9,10 @@ import { ACTIVITY_TYPE, PALABRAS_WORD_COUNT } from "../core/activity-model.js";
 import {
 	HINT_MAX_LENGTH,
 	MAX_HINTS,
+	MAX_REVEALS,
 	TIEBREAKER_COUNT,
 	checkAnagramPair,
+	computeReveals,
 	generateAnagram,
 	normalizeSolution,
 } from "../core/anagram.js";
@@ -19,6 +21,14 @@ import { mountActivityEditor } from "./activity-editor.js";
 import { clear, el } from "./dom.js";
 
 const TIEBREAKER_LABELS = ["Principal", "Reserva 1", "Reserva 2"];
+
+/** The word with its revealed positions, for the editor preview. */
+function maskOf(solution, level) {
+	const normalized = normalizeSolution(solution);
+	if (normalized === undefined || level < 1) return "";
+	const revealed = new Set(computeReveals(solution, level));
+	return [...normalized].map((letter, index) => (revealed.has(index) ? letter : "_")).join(" ");
+}
 
 export function mountPalabrasSection({ db }) {
 	return mountActivityEditor({
@@ -58,6 +68,40 @@ function createGameSection({ session }) {
 
 	// ------------------------------------------------------------------- words
 
+	function renderRevealsField() {
+		const draft = currentDraft();
+		const id = "campo-descubrimientos";
+		const select = el(
+			"select",
+			{ class: "input", id },
+			...[0, 1, 2].map((value) =>
+				el(
+					"option",
+					{ value: String(value), selected: (draft.letterReveals ?? 0) === value },
+					value === 0 ? "Sin descubrimientos" : `${value} ${value === 1 ? "descubrimiento" : "descubrimientos"}`,
+				),
+			),
+		);
+		select.addEventListener("change", () => {
+			const current = currentDraft();
+			const parsed = Number.parseInt(select.value, 10);
+			current.letterReveals = Number.isInteger(parsed) && parsed >= 0 && parsed <= MAX_REVEALS ? parsed : 0;
+			session.markDirty();
+			renderWords();
+		});
+		return el(
+			"div",
+			{ class: "field" },
+			el("label", { class: "field__label", for: id }, "Descubrimientos por palabra"),
+			select,
+			el(
+				"p",
+				{ class: "field__hint" },
+				"Cada descubrimiento revela letras en su posición durante la ronda: primero las vocales, después la última consonante. Se activa a mano, ronda por ronda.",
+			),
+		);
+	}
+
 	function renderWords() {
 		const activity = currentDraft();
 		clear(wordsBox);
@@ -92,6 +136,7 @@ function createGameSection({ session }) {
 					"Agregar palabra",
 				),
 			),
+			renderRevealsField(),
 		);
 		const list = el("ol", { class: "word-list" });
 		activity.game.words.forEach((word, index) => {
@@ -105,6 +150,7 @@ function createGameSection({ session }) {
 				entry.solution = solutionInput.value;
 				entry.normalized = normalizeSolution(solutionInput.value) ?? "";
 				applyStatus(status, entry);
+				updatePreview();
 				session.markDirty();
 			});
 			anagramInput.addEventListener("input", () => {
@@ -114,6 +160,17 @@ function createGameSection({ session }) {
 				applyStatus(status, entry);
 				session.markDirty();
 			});
+
+			const preview = el("p", { class: "field__hint word-row__preview" });
+			const updatePreview = () => {
+				const entry = currentDraft().game.words[index];
+				const level = currentDraft().letterReveals ?? 0;
+				if (!entry) return;
+				const masked = maskOf(entry.solution, level);
+				preview.hidden = masked.length === 0;
+				preview.textContent = masked.length === 0 ? "" : `Descubrimiento ${level}: ${masked}`;
+			};
+			updatePreview();
 
 			const hints = el("div", { class: "hint-list" });
 			clear(hints);
@@ -247,6 +304,7 @@ function createGameSection({ session }) {
 						),
 					),
 					hints,
+					preview,
 				),
 			);
 		});

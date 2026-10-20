@@ -933,3 +933,11 @@ html[data-contrast="alto"] .sopa-grid__cell--solved {
 		grid-column: 1 / -1;
 	}
 }
+
+.word-row__preview {
+	grid-column: 1 / -1;
+	margin: 0.15rem 0 0;
+	font-family: var(--font-mono);
+	letter-spacing: 0.12em;
+	color: var(--accent-ink);
+}

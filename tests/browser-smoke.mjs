@@ -444,6 +444,46 @@ try {
 		);
 	});
 
+	await step("los descubrimientos se configuran por actividad y muestran la vista previa", async () => {
+		const select = page.getByLabel("Descubrimientos por palabra");
+		await select.selectOption("2");
+		const preview = page.locator(".word-row__preview").first();
+		await preview.waitFor({ timeout: 3000 });
+		const masked = await preview.textContent();
+		assert.match(masked, /^Descubrimiento 2: /u);
+		assert.match(masked, /_/u, "la vista previa muestra las posiciones ocultas");
+		assert.match(masked, /[A-Z]/u, "y las letras reveladas");
+		await page.getByText(/^Guardado/u).waitFor({ timeout: 8000 });
+	});
+
+	await step("el nivel y las posiciones reveladas quedan guardados", async () => {
+		const stored = await page.evaluate(async () => {
+			const db = await new Promise((resolve, reject) => {
+				const request = indexedDB.open("jla-dinamicas");
+				request.onsuccess = () => resolve(request.result);
+				request.onerror = () => reject(request.error);
+			});
+			const tx = db.transaction("activities", "readonly");
+			const all = tx.objectStore("activities").getAll();
+			const rows = await new Promise((resolve) => {
+				all.onsuccess = () => resolve(all.result);
+			});
+			const row = rows.find((candidate) => candidate.type === "palabras");
+			return row ? { level: row.letterReveals, reveals: row.game.words[0]?.reveals ?? [] } : undefined;
+		});
+		assert.equal(stored?.level, 2, "el nivel se guarda en la actividad");
+		assert.ok(Array.isArray(stored?.reveals) && stored.reveals.length > 0, "las posiciones se guardan con la palabra");
+		await page.reload();
+		await page.getByRole("heading", { name: "Panel de administración" }).waitFor();
+		await page.locator('input[inputmode="numeric"]').first().fill("5678");
+		await page.getByRole("button", { name: "Entrar" }).click();
+		await page.getByRole("link", { name: "Palabras desordenadas", exact: true }).click();
+		await page.getByRole("button", { name: "Abrir" }).first().click();
+		await page.getByRole("heading", { name: "Palabras desordenadas: Ayuno y oración" }).waitFor();
+		assert.equal(await page.getByLabel("Descubrimientos por palabra").inputValue(), "2");
+		await page.locator(".word-row__preview").first().waitFor({ timeout: 3000 });
+	});
+
 	await step("un navegador con la marca de siembra antigua recibe el ejemplo nuevo", async () => {
 		// Reproduce the reported state: the phase-2 global marker and only the sopa example.
 		await page.evaluate(async () => {
