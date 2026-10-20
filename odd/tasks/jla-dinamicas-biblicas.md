@@ -227,3 +227,9 @@ Defectos encontrados durante la fase (todos corregidos):
 3. **Dato de test incorrecto**: `OOICARN` tiene el mismo multiconjunto que `ORACION` (la O se repite), así que era un anagrama válido y no un caso de letra extra. Corregido a `OOICARNO`.
 
 Evidencia: `node --test tests/*.test.mjs` → 106/106 (18 pruebas nuevas de anagramas y modelo de palabras); `node tests/browser-smoke.mjs` → 28/28 (5 verificaciones nuevas de fase 3).
+
+**L17** — El smoke contra el sitio publicado falló una vez justo después del deploy (`317236d`) y pasó en dos corridas posteriores. No era la app: la siembra de los dos ejemplos estaba correcta en IndexedDB (verificado con un script que leyó la base del sitio publicado) y el fallo fue la ventana de propagación del CDN de GitHub Pages, en la que conviven archivos viejos y nuevos.
+
+Lección de proceso: después de un deploy, **esperar la propagación antes de correr la verificación contra la URL pública**. El SHA de `/deployments` confirma que el despliegue terminó, no que el CDN ya sirva todos los archivos nuevos. Para el desarrollo diario, el smoke local sigue siendo la verificación primaria; el remoto valida el despliegue (rutas, MIME, HTTPS), no la lógica.
+
+Evidencia final: 28/28 local y 28/28 contra `https://d-yanez.github.io/jla-dinamicas-biblicas/` en dos corridas consecutivas.
