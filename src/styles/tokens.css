@@ -1,0 +1,92 @@
+/* JLA visual identity.
+ *
+ * Palette is fixed by the spec: forest green #173B31, cream #F8F5EC, soft gold
+ * #E8C988. Everything else is derived so a single place controls the theme.
+ * Two independent switches live on <html>:
+ *   data-size="normal|grande"   projection size (grande by default, scales rem)
+ *   data-contrast="jla|alto"    high contrast is an independent toggle
+ */
+
+:root {
+	color-scheme: light;
+
+	/* Identity */
+	--jla-green: #173b31;
+	--jla-green-deep: #102a23;
+	--jla-green-soft: #1f4a3e;
+	--jla-cream: #f8f5ec;
+	--jla-cream-raised: #fffdf6;
+	--jla-gold: #e8c988;
+	--jla-gold-deep: #c9a257;
+	--jla-gold-ink: #7b5e1f;
+
+	/* Semantic */
+	--surface: var(--jla-cream);
+	--surface-raised: var(--jla-cream-raised);
+	--surface-brand: var(--jla-green);
+	--surface-brand-soft: var(--jla-green-soft);
+	--on-surface: #1b2a26;
+	--on-surface-muted: #4e5f59;
+	--on-brand: var(--jla-cream);
+	--on-brand-muted: #c7d6cf;
+	--accent: var(--jla-gold);
+	--accent-ink: var(--jla-gold-ink);
+	--border: rgba(23, 59, 49, 0.16);
+	--border-strong: rgba(23, 59, 49, 0.42);
+	--focus: #7b5e1f;
+	--danger: #8c2f1f;
+	--danger-surface: #fbe9e4;
+	--success: #1f5e45;
+
+	/* Shape and rhythm */
+	--radius-sm: 0.45rem;
+	--radius-md: 0.9rem;
+	--radius-lg: 1.4rem;
+	--shadow-card: 0 1.4rem 2.8rem -1.8rem rgba(16, 42, 35, 0.55);
+	--shadow-raised: 0 0.5rem 1.1rem -0.6rem rgba(16, 42, 35, 0.45);
+
+	--space-1: 0.4rem;
+	--space-2: 0.7rem;
+	--space-3: 1rem;
+	--space-4: 1.5rem;
+	--space-5: 2.25rem;
+	--space-6: 3.5rem;
+
+	--font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+	--font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+	--content-width: 64rem;
+	--tap-size: 2.75rem;
+}
+
+html[data-size="grande"] {
+	font-size: 18px;
+}
+
+html[data-size="normal"] {
+	font-size: 16px;
+}
+
+/* High contrast: same identity, stronger separation. Used on projectors, in bright
+ * rooms and by anyone who needs it. It never replaces the JLA style by default. */
+html[data-contrast="alto"] {
+	--surface: #ffffff;
+	--surface-raised: #ffffff;
+	--surface-brand: #0b241d;
+	--surface-brand-soft: #0b241d;
+	--on-surface: #07130f;
+	--on-surface-muted: #1e2b26;
+	--on-brand: #ffffff;
+	--on-brand-muted: #eaf2ee;
+	--accent: #ffd98a;
+	--accent-ink: #5c420f;
+	--border: rgba(7, 19, 15, 0.55);
+	--border-strong: #07130f;
+	--focus: #0b57d0;
+	--danger: #8c1d18;
+	--danger-surface: #ffe9e6;
+	--success: #14532d;
+	--shadow-card: 0 1.2rem 2.4rem -1.6rem rgba(0, 0, 0, 0.65);
+	--shadow-raised: 0 0.4rem 0.9rem -0.5rem rgba(0, 0, 0, 0.6);
+}

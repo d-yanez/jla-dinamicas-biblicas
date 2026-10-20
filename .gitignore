@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Local tooling that is not part of the published app
+.atl/
+
+# Node tooling, if a developer installs Playwright locally
+node_modules/
+
+# Local-only artifacts: a Pi model-profile export and the smoke test scratch file
+deepseek-only-lite.profile.json
+tests/.foreign-recovery.json
