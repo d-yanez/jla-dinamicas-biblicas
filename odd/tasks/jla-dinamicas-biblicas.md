@@ -245,3 +245,12 @@ Corrección:
 4. **Nueva verificación de navegador** que reproduce el estado exacto del usuario (borra el ejemplo de palabras, borra la lista y deja la marca antigua), recarga y exige que el ejemplo reaparezca. Sin esa prueba, el defecto era invisible.
 
 Evidencia: `node --test tests/*.test.mjs` → 113/113 (7 pruebas nuevas en `tests/examples.test.mjs`); `node tests/browser-smoke.mjs` → 29/29.
+
+**L19** — Dos bugs reportados al validar la fase 3. Ambos eran míos.
+
+1. **«Hasta 2 pistas» no hacía nada**: el botón agregaba una pista vacía y `normalizeHints` filtraba las pistas vacías, así que el autoguardado la borraba medio segundo después. Corregido: una pista vacía es una fila que el moderador acaba de agregar y se conserva; la validación sigue limitando a dos y a 140 caracteres. El botón se renombró a **«Agregar pista»**, porque «Hasta dos pistas» se leía como una etiqueta, no como una acción.
+2. **Las ediciones posteriores a un guardado se perdían** («hace rollback»): los manejadores capturaban los objetos `word`/`tiebreaker` del borrador que existía al dibujar la fila. Cada autoguardado **reemplaza** `state.draft` con la copia normalizada, así que editar después de un guardado escribía en un objeto muerto y la escritura siguiente lo descartaba. Corregido en las dos secciones: los manejadores resuelven la entidad **por índice** desde el borrador vigente (`currentDraft().game.words[index]`).
+
+Verificación nueva (sin la cual estos dos defectos eran invisibles): agregar una pista desde cero, escribirla, editarla después de un guardado y exigir que persista tras recargar; y en sopa, editar una palabra dos veces con un guardado en el medio y leer la base para exigir el segundo valor.
+
+Evidencia: `node --test tests/*.test.mjs` → 115/115; `node tests/browser-smoke.mjs` → 32/32.

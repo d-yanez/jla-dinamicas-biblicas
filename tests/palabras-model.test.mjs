@@ -191,3 +191,24 @@ test("los dos ejemplos de la app son válidos, editables y no publicados", () =>
 	assert.equal(palabras.game.tiebreakers.length, 3);
 	assert.ok(palabras.game.words.some((word) => word.hints.length > 0), "el ejemplo debe mostrar pistas");
 });
+
+test("una pista recién agregada y todavía vacía no se descarta al guardar", () => {
+	// Regression: adding a hint created an empty string, and normalization dropped it on
+	// the very next autosave, so the new hint input vanished half a second later.
+	const stored = normalizeActivity({
+		id: "x-1",
+		type: "palabras",
+		game: { words: [{ solution: "Fe", anagram: "EF", hints: ["", "algo"] }] },
+	});
+	assert.deepEqual(stored.game.words[0].hints, ["", "algo"]);
+	assert.equal(stored.game.words[0].hints.length, 2);
+});
+
+test("más de dos pistas se recortan al leer", () => {
+	const stored = normalizeActivity({
+		id: "x-2",
+		type: "palabras",
+		game: { words: [{ solution: "Fe", anagram: "EF", hints: ["una", "dos", "tres"] }] },
+	});
+	assert.deepEqual(stored.game.words[0].hints, ["una", "dos"]);
+});

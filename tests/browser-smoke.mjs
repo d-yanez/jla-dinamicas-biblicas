@@ -330,6 +330,39 @@ try {
 		assert.equal(await page.locator(".sopa-grid__cell").count(), 400);
 	});
 
+	await step("editar una palabra después de un autoguardado no se pierde", async () => {
+		// Every save replaces the draft object; a handler bound to the old one writes into a
+		// dead copy, so the second edit would silently disappear from the database.
+		const savedAfter = async (previous) =>
+			page.waitForFunction(
+				(before) => {
+					const node = document.querySelector(".save-indicator");
+					return Boolean(node) && node.textContent.startsWith("Guardado") && node.textContent !== before;
+				},
+				previous,
+				{ timeout: 8000 },
+			);
+		const input = page.locator('input[aria-label="Palabra 2"]');
+		await input.fill("Oraciones");
+		await savedAfter(await page.locator(".save-indicator").textContent());
+		await input.fill("Oración");
+		await savedAfter(await page.locator(".save-indicator").textContent());
+		const stored = await page.evaluate(async () => {
+			const db = await new Promise((resolve, reject) => {
+				const request = indexedDB.open("jla-dinamicas");
+				request.onsuccess = () => resolve(request.result);
+				request.onerror = () => reject(request.error);
+			});
+			const tx = db.transaction("activities", "readonly");
+			const all = tx.objectStore("activities").getAll();
+			const rows = await new Promise((resolve) => {
+				all.onsuccess = () => resolve(all.result);
+			});
+			return rows.find((row) => row.type === "sopa")?.game.words.map((word) => word.text) ?? [];
+		});
+		assert.deepEqual(stored.slice(0, 2), ["Ayunos", "Oración"], "la segunda edición debe persistir");
+	});
+
 	await step("el ejemplo de palabras desordenadas aparece como borrador con desempates", async () => {
 		await page.getByRole("link", { name: "Palabras desordenadas", exact: true }).click();
 		const row = page.locator(".activity-row").filter({ hasText: "Palabras desordenadas: Ayuno y oración" });
@@ -346,7 +379,7 @@ try {
 		assert.equal(await page.getByLabel(/^Solución \d+$/u).count(), 10);
 		assert.equal(await page.getByLabel(/^Anagrama \d+$/u).count(), 10);
 		assert.equal(await page.getByLabel(/^Respuesta del desempate \d+$/u).count(), 3);
-		assert.ok((await page.getByLabel(/^Pista \d+ de la palabra \d+$/u).count()) >= 2, "el ejemplo trae pistas");
+		assert.ok((await page.locator('input[aria-label^="Pista "]').count()) >= 2, "el ejemplo trae pistas");
 		assert.equal(await page.locator('.word-row__status[data-ok="true"]').count(), 13, "diez palabras y tres desempates válidos");
 	});
 
@@ -375,6 +408,40 @@ try {
 		await page.getByRole("button", { name: "Abrir" }).first().click();
 		await page.getByRole("heading", { name: "Palabras desordenadas: Ayuno y oración" }).waitFor();
 		assert.equal(await page.locator('input[aria-label="Pista 1 de la palabra 3"]').inputValue(), "Pista editada en la prueba");
+	});
+
+	await step("agregar una pista vacía la deja visible y se puede completar", async () => {
+		await page.getByRole("button", { name: "Agregar pista a la palabra 1", exact: true }).click();
+		const hint = page.locator('input[aria-label="Pista 1 de la palabra 1"]');
+		await hint.waitFor({ timeout: 3000 });
+		await hint.fill("Se hace con el corazón atento");
+	});
+
+	await step("editar una pista después de un autoguardado no se pierde", async () => {
+		const savedAfter = async (previous) =>
+			page.waitForFunction(
+				(before) => {
+					const node = document.querySelector(".save-indicator");
+					return Boolean(node) && node.textContent.startsWith("Guardado") && node.textContent !== before;
+				},
+				previous,
+				{ timeout: 8000 },
+			);
+		await savedAfter(await page.locator(".save-indicator").textContent());
+		await page.locator('input[aria-label="Pista 1 de la palabra 1"]').fill("Se hace con el corazón atento y en silencio");
+		await savedAfter(await page.locator(".save-indicator").textContent());
+		await page.reload();
+		await page.getByRole("heading", { name: "Panel de administración" }).waitFor();
+		await page.locator('input[inputmode="numeric"]').first().fill("5678");
+		await page.getByRole("button", { name: "Entrar" }).click();
+		await page.getByRole("link", { name: "Palabras desordenadas", exact: true }).click();
+		await page.getByRole("button", { name: "Abrir" }).first().click();
+		await page.getByRole("heading", { name: "Palabras desordenadas: Ayuno y oración" }).waitFor();
+		assert.equal(
+			await page.locator('input[aria-label="Pista 1 de la palabra 1"]').inputValue(),
+			"Se hace con el corazón atento y en silencio",
+			"la pista agregada y editada debe persistir",
+		);
 	});
 
 	await step("un navegador con la marca de siembra antigua recibe el ejemplo nuevo", async () => {

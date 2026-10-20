@@ -177,8 +177,10 @@ function normalizeSopaGame(value) {
 
 function normalizeHints(value) {
 	if (!Array.isArray(value)) return [];
+	// An empty hint is a row the moderator just added. Dropping it made the new input
+	// disappear on the next autosave; validation is what decides whether it is usable.
 	return value
-		.filter((hint) => typeof hint === "string" && hint.trim().length > 0)
+		.filter((hint) => typeof hint === "string")
 		.map((hint) => hint.trim())
 		.slice(0, MAX_HINTS);
 }

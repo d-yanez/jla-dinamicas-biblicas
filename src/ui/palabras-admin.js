@@ -1,8 +1,9 @@
 // Palabras desordenadas game section: solution, anagram (editable or regenerable),
 // up to two hints per word, and the three tiebreaker words.
 //
-// The anagram is validated live against its solution with the same multiset rule the
-// engine uses, so the moderator sees "revisar" as soon as the letters stop matching.
+// Every handler resolves its entity from the current draft by index. An autosave replaces
+// session.state.draft, so a handler that captured a word object would write into a dead
+// copy: the edit would look applied and then vanish on the next save.
 
 import { ACTIVITY_TYPE, PALABRAS_WORD_COUNT } from "../core/activity-model.js";
 import {
@@ -28,22 +29,21 @@ export function mountPalabrasSection({ db }) {
 }
 
 function createGameSection({ session }) {
-	const draft = () => session.state.draft;
+	const currentDraft = () => session.state.draft;
 	const wordsBox = el("div", { class: "stack-tight" });
 	const tiesBox = el("div", { class: "stack-tight" });
 
-	function statusOf(entry) {
-		return checkAnagramPair({ solution: entry?.solution, anagram: entry?.anagram });
-	}
-
 	function applyStatus(node, entry) {
-		const result = statusOf(entry);
+		const result = checkAnagramPair({ solution: entry?.solution, anagram: entry?.anagram });
 		node.textContent = result.ok ? "Válido" : result.message;
 		node.dataset.ok = result.ok ? "true" : "false";
 		node.className = `word-row__status${result.ok ? "" : " word-row__status--error"}`;
 	}
 
-	function regenerate(entry, anagramInput, status, notice) {
+	/** Regenerates the anagram of one entry, addressed by index in its store. */
+	function regenerate(store, index, anagramInput, status) {
+		const entry = currentDraft().game[store][index];
+		if (!entry) return;
 		const generated = generateAnagram({ solution: entry.solution, seed: createId() });
 		if (!generated.ok) {
 			session.setNotice(generated.error);
@@ -52,14 +52,14 @@ function createGameSection({ session }) {
 		entry.anagram = generated.anagram;
 		if (anagramInput) anagramInput.value = generated.anagram;
 		if (status) applyStatus(status, entry);
-		session.setNotice(notice);
+		session.setNotice("");
 		session.markDirty();
 	}
 
 	// ------------------------------------------------------------------- words
 
 	function renderWords() {
-		const activity = draft();
+		const activity = currentDraft();
 		clear(wordsBox);
 		wordsBox.append(
 			el(
@@ -82,7 +82,9 @@ function createGameSection({ session }) {
 						type: "button",
 						disabled: activity.game.words.length >= PALABRAS_WORD_COUNT,
 						onclick: () => {
-							activity.game.words.push({ id: createId(), solution: "", normalized: "", anagram: "", hints: [] });
+							const draft = currentDraft();
+							if (draft.game.words.length >= PALABRAS_WORD_COUNT) return;
+							draft.game.words.push({ id: createId(), solution: "", normalized: "", anagram: "", hints: [] });
 							session.markDirty();
 							renderWords();
 						},
@@ -98,74 +100,85 @@ function createGameSection({ session }) {
 			const anagramInput = el("input", { class: "input", type: "text", value: word.anagram, "aria-label": `Anagrama ${index + 1}`, maxlength: "20" });
 			applyStatus(status, word);
 			solutionInput.addEventListener("input", () => {
-				word.solution = solutionInput.value;
-				word.normalized = normalizeSolution(solutionInput.value) ?? "";
-				applyStatus(status, word);
+				const entry = currentDraft().game.words[index];
+				if (!entry) return;
+				entry.solution = solutionInput.value;
+				entry.normalized = normalizeSolution(solutionInput.value) ?? "";
+				applyStatus(status, entry);
 				session.markDirty();
 			});
 			anagramInput.addEventListener("input", () => {
-				word.anagram = anagramInput.value;
-				applyStatus(status, word);
+				const entry = currentDraft().game.words[index];
+				if (!entry) return;
+				entry.anagram = anagramInput.value;
+				applyStatus(status, entry);
 				session.markDirty();
 			});
 
 			const hints = el("div", { class: "hint-list" });
-			const drawHints = () => {
-				clear(hints);
-				word.hints.forEach((hint, hintIndex) => {
-					const hintInput = el("input", {
-						class: "input",
-						type: "text",
-						value: hint,
-						"aria-label": `Pista ${hintIndex + 1} de la palabra ${index + 1}`,
-						maxlength: String(HINT_MAX_LENGTH),
-					});
-					hintInput.addEventListener("input", () => {
-						word.hints[hintIndex] = hintInput.value;
-						session.markDirty();
-					});
-					hints.append(
-						el(
-							"div",
-							{ class: "hint-row" },
-							el("span", { class: "hint-row__index" }, `Pista ${hintIndex + 1}`),
-							hintInput,
-							el(
-								"button",
-								{
-									class: "btn btn--ghost btn--small",
-									type: "button",
-									"aria-label": `Quitar la pista ${hintIndex + 1} de la palabra ${index + 1}`,
-									onclick: () => {
-										word.hints.splice(hintIndex, 1);
-										session.markDirty();
-										renderWords();
-									},
-								},
-								"Quitar",
-							),
-						),
-					);
+			clear(hints);
+			(word.hints ?? []).forEach((hint, hintIndex) => {
+				const hintInput = el("input", {
+					class: "input",
+					type: "text",
+					value: hint,
+					"aria-label": `Pista ${hintIndex + 1} de la palabra ${index + 1}`,
+					maxlength: String(HINT_MAX_LENGTH),
+				});
+				hintInput.addEventListener("input", () => {
+					const entry = currentDraft().game.words[index];
+					if (!entry || !Array.isArray(entry.hints)) return;
+					entry.hints[hintIndex] = hintInput.value;
+					session.markDirty();
 				});
 				hints.append(
 					el(
-						"button",
-						{
-							class: "btn btn--ghost btn--small",
-							type: "button",
-							disabled: word.hints.length >= MAX_HINTS,
-							"aria-label": `Agregar pista a la palabra ${index + 1}`,
-							onclick: () => {
-								word.hints.push("");
-								session.markDirty();
-								renderWords();
+						"div",
+						{ class: "hint-row" },
+						el("span", { class: "hint-row__index" }, `Pista ${hintIndex + 1}`),
+						hintInput,
+						el(
+							"button",
+							{
+								class: "btn btn--ghost btn--small",
+								type: "button",
+								"aria-label": `Quitar la pista ${hintIndex + 1} de la palabra ${index + 1}`,
+								onclick: () => {
+									const entry = currentDraft().game.words[index];
+									if (!entry) return;
+									entry.hints.splice(hintIndex, 1);
+									session.markDirty();
+									renderWords();
+								},
 							},
-						},
-						"Hasta dos pistas",
+							"Quitar",
+						),
 					),
 				);
-			};
-			drawHints();
+			});
+			hints.append(
+				el(
+					"button",
+					{
+						class: "btn btn--ghost btn--small",
+						type: "button",
+						disabled: (word.hints ?? []).length >= MAX_HINTS,
+						"aria-label": `Agregar pista a la palabra ${index + 1}`,
+						onclick: () => {
+							const entry = currentDraft().game.words[index];
+							if (!entry) return;
+							entry.hints = Array.isArray(entry.hints) ? entry.hints : [];
+							if (entry.hints.length >= MAX_HINTS) return;
+							entry.hints.push("");
+							// Clear the pending verdict so a previous save cannot resurrect the old
+							// hint list before this one is written.
+							session.markDirty();
+							renderWords();
+						},
+					},
+					"Agregar pista",
+				),
+			);
 
 			list.append(
 				el(
@@ -184,7 +197,7 @@ function createGameSection({ session }) {
 								class: "btn btn--ghost btn--small",
 								type: "button",
 								"aria-label": `Regenerar anagrama ${index + 1}`,
-								onclick: () => regenerate(word, anagramInput, status, ""),
+								onclick: () => regenerate("words", index, anagramInput, status),
 							},
 							"Regenerar",
 						),
@@ -196,7 +209,7 @@ function createGameSection({ session }) {
 								"aria-label": `Subir la palabra ${index + 1}`,
 								disabled: index === 0,
 								onclick: () => {
-									swapWords(activity.game.words, index - 1, index);
+									swap(currentDraft().game.words, index - 1, index);
 									session.markDirty();
 									renderWords();
 								},
@@ -209,9 +222,9 @@ function createGameSection({ session }) {
 								class: "btn btn--ghost btn--small",
 								type: "button",
 								"aria-label": `Bajar la palabra ${index + 1}`,
-								disabled: index === activity.game.words.length - 1,
+								disabled: index === currentDraft().game.words.length - 1,
 								onclick: () => {
-									swapWords(activity.game.words, index, index + 1);
+									swap(currentDraft().game.words, index, index + 1);
 									session.markDirty();
 									renderWords();
 								},
@@ -225,7 +238,7 @@ function createGameSection({ session }) {
 								type: "button",
 								"aria-label": `Eliminar la palabra ${index + 1}`,
 								onclick: () => {
-									activity.game.words.splice(index, 1);
+									currentDraft().game.words.splice(index, 1);
 									session.markDirty();
 									renderWords();
 								},
@@ -243,7 +256,7 @@ function createGameSection({ session }) {
 	// ------------------------------------------------------------- tiebreakers
 
 	function renderTiebreakers() {
-		const activity = draft();
+		const activity = currentDraft();
 		clear(tiesBox);
 		tiesBox.append(
 			el(
@@ -266,7 +279,9 @@ function createGameSection({ session }) {
 						type: "button",
 						disabled: activity.game.tiebreakers.length >= TIEBREAKER_COUNT,
 						onclick: () => {
-							activity.game.tiebreakers.push({ id: createId(), solution: "", normalized: "", anagram: "" });
+							const draft = currentDraft();
+							if (draft.game.tiebreakers.length >= TIEBREAKER_COUNT) return;
+							draft.game.tiebreakers.push({ id: createId(), solution: "", normalized: "", anagram: "" });
 							session.markDirty();
 							renderTiebreakers();
 						},
@@ -295,14 +310,18 @@ function createGameSection({ session }) {
 			});
 			applyStatus(status, tiebreaker);
 			solutionInput.addEventListener("input", () => {
-				tiebreaker.solution = solutionInput.value;
-				tiebreaker.normalized = normalizeSolution(solutionInput.value) ?? "";
-				applyStatus(status, tiebreaker);
+				const entry = currentDraft().game.tiebreakers[index];
+				if (!entry) return;
+				entry.solution = solutionInput.value;
+				entry.normalized = normalizeSolution(solutionInput.value) ?? "";
+				applyStatus(status, entry);
 				session.markDirty();
 			});
 			anagramInput.addEventListener("input", () => {
-				tiebreaker.anagram = anagramInput.value;
-				applyStatus(status, tiebreaker);
+				const entry = currentDraft().game.tiebreakers[index];
+				if (!entry) return;
+				entry.anagram = anagramInput.value;
+				applyStatus(status, entry);
 				session.markDirty();
 			});
 			list.append(
@@ -322,7 +341,7 @@ function createGameSection({ session }) {
 								class: "btn btn--ghost btn--small",
 								type: "button",
 								"aria-label": `Regenerar anagrama del desempate ${index + 1}`,
-								onclick: () => regenerate(tiebreaker, anagramInput, status, ""),
+								onclick: () => regenerate("tiebreakers", index, anagramInput, status),
 							},
 							"Regenerar",
 						),
@@ -333,7 +352,7 @@ function createGameSection({ session }) {
 								type: "button",
 								"aria-label": `Eliminar el desempate ${index + 1}`,
 								onclick: () => {
-									activity.game.tiebreakers.splice(index, 1);
+									currentDraft().game.tiebreakers.splice(index, 1);
 									session.markDirty();
 									renderTiebreakers();
 								},
@@ -352,14 +371,13 @@ function createGameSection({ session }) {
 
 	return {
 		element: el("div", { class: "stack" }, wordsBox, tiesBox),
-		onEvent(event) {
-			// Nothing to rebuild: solutions, anagrams and hints are edited in place.
-			void event;
+		onEvent() {
+			// Solutions, anagrams and hints are edited in place against the current draft.
 		},
 	};
 }
 
-function swapWords(words, left, right) {
-	if (left < 0 || right < 0 || left >= words.length || right >= words.length) return;
-	[words[left], words[right]] = [words[right], words[left]];
+function swap(list, left, right) {
+	if (left < 0 || right < 0 || left >= list.length || right >= list.length) return;
+	[list[left], list[right]] = [list[right], list[left]];
 }

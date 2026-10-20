@@ -22,6 +22,8 @@ export function mountSopaSection({ db }) {
 }
 
 function createGameSection({ session }) {
+	// Always resolve entities from the current draft: an autosave replaces state.draft, so
+	// handlers that captured a word object would write into a dead copy and lose the edit.
 	const draft = () => session.state.draft;
 	const state = {
 		showSolution: false,
@@ -58,7 +60,9 @@ function createGameSection({ session }) {
 						type: "button",
 						disabled: activity.game.words.length >= SOPA_WORD_COUNT,
 						onclick: () => {
-							activity.game.words.push({ id: createId(), text: "" });
+							const current = draft();
+							if (current.game.words.length >= SOPA_WORD_COUNT) return;
+							current.game.words.push({ id: createId(), text: "" });
 							session.markDirty();
 							renderWords();
 						},
@@ -78,11 +82,13 @@ function createGameSection({ session }) {
 				maxlength: "20",
 			});
 			input.addEventListener("input", () => {
-				word.text = input.value;
+				const current = draft().game.words[index];
+				if (!current) return;
+				current.text = input.value;
 				// Keep the cache equal to the text at every keystroke: a stale normalized
 				// made the engine place the previous word when generating before the save.
-				word.normalized = normalizeWord(input.value) ?? "";
-				normalizedHint.textContent = word.normalized.length > 0 ? word.normalized : "—";
+				current.normalized = normalizeWord(input.value) ?? "";
+				normalizedHint.textContent = current.normalized.length > 0 ? current.normalized : "—";
 				refreshVariantStaleness();
 				session.markDirty();
 			});
@@ -104,7 +110,7 @@ function createGameSection({ session }) {
 								"aria-label": `Subir la palabra ${index + 1}`,
 								disabled: index === 0,
 								onclick: () => {
-									swapWords(activity, index - 1, index);
+									swapWords(draft(), index - 1, index);
 									session.markDirty();
 									renderWords();
 								},
@@ -119,7 +125,7 @@ function createGameSection({ session }) {
 								"aria-label": `Bajar la palabra ${index + 1}`,
 								disabled: index === activity.game.words.length - 1,
 								onclick: () => {
-									swapWords(activity, index, index + 1);
+									swapWords(draft(), index, index + 1);
 									session.markDirty();
 									renderWords();
 								},
@@ -133,7 +139,7 @@ function createGameSection({ session }) {
 								type: "button",
 								"aria-label": `Eliminar la palabra ${index + 1}`,
 								onclick: () => {
-									activity.game.words.splice(index, 1);
+									draft().game.words.splice(index, 1);
 									session.markDirty();
 									renderWords();
 								},
