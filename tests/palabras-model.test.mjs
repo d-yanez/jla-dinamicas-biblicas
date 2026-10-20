@@ -212,3 +212,34 @@ test("más de dos pistas se recortan al leer", () => {
 	});
 	assert.deepEqual(stored.game.words[0].hints, ["una", "dos"]);
 });
+
+test("los desempates también admiten hasta dos pistas", () => {
+	// The spec only asks for a valid answer and anagram on tiebreakers; blocking hints
+	// there was an unnecessary restriction of ours.
+	const withHints = palabrasDraft();
+	withHints.game.tiebreakers[0] = { ...withHints.game.tiebreakers[0], hints: ["una", "dos"] };
+	assert.deepEqual(validateActivity(withHints), { ok: true, errors: [] });
+
+	const tooMany = palabrasDraft();
+	tooMany.game.tiebreakers[0] = { ...tooMany.game.tiebreakers[0], hints: ["una", "dos", "tres"] };
+	assert.ok(validateActivity(tooMany).errors.some((error) => /dos pistas/u.test(error.message)));
+
+	const long = palabrasDraft();
+	long.game.tiebreakers[0] = { ...long.game.tiebreakers[0], hints: ["x".repeat(200)] };
+	assert.ok(validateActivity(long).errors.some((error) => /140/u.test(error.message)));
+});
+
+test("las pistas de los desempates se guardan y cuentan como contenido relevante", () => {
+	const stored = normalizeActivity({
+		id: "x-3",
+		type: "palabras",
+		game: { tiebreakers: [{ solution: "Fe", anagram: "EF", hints: ["", "algo"] }] },
+	});
+	assert.deepEqual(stored.game.tiebreakers[0].hints, ["", "algo"]);
+
+	const base = palabrasDraft();
+	base.game.tiebreakers[0] = { ...base.game.tiebreakers[0], hints: ["algo"] };
+	assert.notEqual(relevantContentSignature(base), relevantContentSignature(palabrasDraft()), "una pista de desempate es contenido relevante");
+	const copy = duplicateAsDraft(base);
+	assert.deepEqual(copy.game.tiebreakers[0].hints, ["algo"]);
+});

@@ -118,6 +118,7 @@ export function relevantContentSignature(activity) {
 			tiebreakers: (game.tiebreakers ?? []).map((tiebreaker) => [
 				normalizeSolution(tiebreaker?.solution) ?? "",
 				normalizeSolution(tiebreaker?.anagram) ?? "",
+				(tiebreaker?.hints ?? []).map((hint) => String(hint).trim()),
 			]),
 		});
 	}
@@ -223,7 +224,7 @@ function normalizePalabrasGame(value) {
 		game.words = value.words.map((word) => normalizePalabrasEntry(word, { withHints: true })).filter(Boolean);
 	}
 	if (Array.isArray(value.tiebreakers)) {
-		game.tiebreakers = value.tiebreakers.map((entry) => normalizePalabrasEntry(entry, { withHints: false })).filter(Boolean);
+		game.tiebreakers = value.tiebreakers.map((entry) => normalizePalabrasEntry(entry, { withHints: true })).filter(Boolean);
 	}
 	return game;
 }
@@ -304,7 +305,10 @@ export function duplicateAsDraft(activity) {
 		source.type === ACTIVITY_TYPE.PALABRAS
 			? {
 					words: source.game.words.map((word) => ({ ...word, hints: [...(word.hints ?? [])] })),
-					tiebreakers: source.game.tiebreakers.map((tiebreaker) => ({ ...tiebreaker })),
+					tiebreakers: source.game.tiebreakers.map((tiebreaker) => ({
+						...tiebreaker,
+						hints: [...(tiebreaker.hints ?? [])],
+					})),
 				}
 			: {
 					words: source.game.words.map((word) => ({ ...word })),
@@ -426,6 +430,6 @@ function validatePalabras(activity, push) {
 		);
 	}
 	tiebreakers.forEach((tiebreaker, index) =>
-		validatePalabrasEntry(tiebreaker, index, "game.tiebreakers", push, { label: "palabra de desempate", withHints: false }),
+		validatePalabrasEntry(tiebreaker, index, "game.tiebreakers", push, { label: "palabra de desempate", withHints: true }),
 	);
 }

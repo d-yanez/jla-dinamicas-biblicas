@@ -484,6 +484,37 @@ try {
 		await page.locator(".word-row__preview").first().waitFor({ timeout: 3000 });
 	});
 
+	await step("los desempates también admiten pistas", async () => {
+		await page.getByRole("button", { name: "Agregar pista al desempate 1", exact: true }).click();
+		const hint = page.locator('input[aria-label="Pista 1 del desempate 1"]');
+		await hint.waitFor({ timeout: 3000 });
+		const before = await page.locator(".save-indicator").textContent();
+		await hint.fill("Perdona de corazón");
+		await page.waitForFunction(
+			(previous) => {
+				const node = document.querySelector(".save-indicator");
+				return Boolean(node) && node.textContent.startsWith("Guardado") && node.textContent !== previous;
+			},
+			before,
+			{ timeout: 8000 },
+		);
+		const stored = await page.evaluate(async () => {
+			const db = await new Promise((resolve, reject) => {
+				const request = indexedDB.open("jla-dinamicas");
+				request.onsuccess = () => resolve(request.result);
+				request.onerror = () => reject(request.error);
+			});
+			const tx = db.transaction("activities", "readonly");
+			const all = tx.objectStore("activities").getAll();
+			const rows = await new Promise((resolve) => {
+				all.onsuccess = () => resolve(all.result);
+			});
+			const row = rows.find((candidate) => candidate.type === "palabras");
+			return row?.game.tiebreakers?.[0]?.hints ?? [];
+		});
+		assert.deepEqual(stored, ["Perdona de corazón"], "la pista del desempate debe quedar guardada");
+	});
+
 	await step("un navegador con la marca de siembra antigua recibe el ejemplo nuevo", async () => {
 		// Reproduce the reported state: the phase-2 global marker and only the sopa example.
 		await page.evaluate(async () => {

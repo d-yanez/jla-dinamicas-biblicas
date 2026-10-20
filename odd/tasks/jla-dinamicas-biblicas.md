@@ -283,3 +283,9 @@ Alcance cerrado, tomado de §8:
 Descartado explícitamente por el usuario: sonido al revelar pistas/descubrimientos y colchón de ambiente. Motivo registrado: en la sala la música compite con la voz del moderador; el suspenso lo producen el tic y la pausa, no la música.
 
 Implementación prevista: **WebAudio sintetizado** (oscilador + envolvente) en un módulo `audio.js`, sin archivos ni CDN: cero peso en el repo y disponible offline desde el primer uso. Si más adelante se prefiere una campana real, el reemplazo son dos archivos cortos y un punto de cambio.
+
+**L22** — Bug reportado: «las palabras de desempate no permiten agregar pistas». Era una **restricción propia**, no del documento: §6 solo pide «respuesta y anagrama válidos» en los desempates, y en L15.5 se decidió dejarlas sin pistas sin fundamento en el texto. Corregido: los desempates comparten el editor de pistas con las palabras de ronda (0–2 pistas, hasta 140 caracteres), sus pistas se normalizan, se validan, entran en la firma de contenido relevante y las copia el duplicado.
+
+Se extrajo un único `buildHints({ store, index, rerender })` para que palabras y desempates no tengan dos editores de pistas que se puedan desincronizar.
+
+Evidencia: `node --test tests/*.test.mjs` → 125/125 (2 pruebas nuevas); `node tests/browser-smoke.mjs` → 35/35 (nueva verificación: agregar una pista al desempate 1 y comprobar en la base que quedó guardada).

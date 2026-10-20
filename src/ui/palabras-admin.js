@@ -102,6 +102,78 @@ function createGameSection({ session }) {
 		);
 	}
 
+	/** Hint editor shared by words and tiebreakers. */
+	function buildHints({ store, index, rerender }) {
+		const entryOf = () => currentDraft().game[store]?.[index];
+		const scope =
+			store === "words"
+				? { of: `de la palabra ${index + 1}`, add: `a la palabra ${index + 1}` }
+				: { of: `del desempate ${index + 1}`, add: `al desempate ${index + 1}` };
+		const box = el("div", { class: "hint-list" });
+		const entry = entryOf();
+		(entry?.hints ?? []).forEach((hint, hintIndex) => {
+			const hintInput = el("input", {
+				class: "input",
+				type: "text",
+				value: hint,
+				"aria-label": `Pista ${hintIndex + 1} ${scope.of}`,
+				maxlength: String(HINT_MAX_LENGTH),
+			});
+			hintInput.addEventListener("input", () => {
+				const current = entryOf();
+				if (!current || !Array.isArray(current.hints)) return;
+				current.hints[hintIndex] = hintInput.value;
+				session.markDirty();
+			});
+			box.append(
+				el(
+					"div",
+					{ class: "hint-row" },
+					el("span", { class: "hint-row__index" }, `Pista ${hintIndex + 1}`),
+					hintInput,
+					el(
+						"button",
+						{
+							class: "btn btn--ghost btn--small",
+							type: "button",
+							"aria-label": `Quitar la pista ${hintIndex + 1} ${scope.of}`,
+							onclick: () => {
+								const current = entryOf();
+								if (!current) return;
+								current.hints.splice(hintIndex, 1);
+								session.markDirty();
+								rerender();
+							},
+						},
+						"Quitar",
+					),
+				),
+			);
+		});
+		box.append(
+			el(
+				"button",
+				{
+					class: "btn btn--ghost btn--small",
+					type: "button",
+					disabled: (entry?.hints ?? []).length >= MAX_HINTS,
+					"aria-label": `Agregar pista ${scope.add}`,
+					onclick: () => {
+						const current = entryOf();
+						if (!current) return;
+						current.hints = Array.isArray(current.hints) ? current.hints : [];
+						if (current.hints.length >= MAX_HINTS) return;
+						current.hints.push("");
+						session.markDirty();
+						rerender();
+					},
+				},
+				"Agregar pista",
+			),
+		);
+		return box;
+	}
+
 	function renderWords() {
 		const activity = currentDraft();
 		clear(wordsBox);
@@ -172,70 +244,7 @@ function createGameSection({ session }) {
 			};
 			updatePreview();
 
-			const hints = el("div", { class: "hint-list" });
-			clear(hints);
-			(word.hints ?? []).forEach((hint, hintIndex) => {
-				const hintInput = el("input", {
-					class: "input",
-					type: "text",
-					value: hint,
-					"aria-label": `Pista ${hintIndex + 1} de la palabra ${index + 1}`,
-					maxlength: String(HINT_MAX_LENGTH),
-				});
-				hintInput.addEventListener("input", () => {
-					const entry = currentDraft().game.words[index];
-					if (!entry || !Array.isArray(entry.hints)) return;
-					entry.hints[hintIndex] = hintInput.value;
-					session.markDirty();
-				});
-				hints.append(
-					el(
-						"div",
-						{ class: "hint-row" },
-						el("span", { class: "hint-row__index" }, `Pista ${hintIndex + 1}`),
-						hintInput,
-						el(
-							"button",
-							{
-								class: "btn btn--ghost btn--small",
-								type: "button",
-								"aria-label": `Quitar la pista ${hintIndex + 1} de la palabra ${index + 1}`,
-								onclick: () => {
-									const entry = currentDraft().game.words[index];
-									if (!entry) return;
-									entry.hints.splice(hintIndex, 1);
-									session.markDirty();
-									renderWords();
-								},
-							},
-							"Quitar",
-						),
-					),
-				);
-			});
-			hints.append(
-				el(
-					"button",
-					{
-						class: "btn btn--ghost btn--small",
-						type: "button",
-						disabled: (word.hints ?? []).length >= MAX_HINTS,
-						"aria-label": `Agregar pista a la palabra ${index + 1}`,
-						onclick: () => {
-							const entry = currentDraft().game.words[index];
-							if (!entry) return;
-							entry.hints = Array.isArray(entry.hints) ? entry.hints : [];
-							if (entry.hints.length >= MAX_HINTS) return;
-							entry.hints.push("");
-							// Clear the pending verdict so a previous save cannot resurrect the old
-							// hint list before this one is written.
-							session.markDirty();
-							renderWords();
-						},
-					},
-					"Agregar pista",
-				),
-			);
+			const hints = buildHints({ store: "words", index, rerender: renderWords });
 
 			list.append(
 				el(
@@ -418,6 +427,7 @@ function createGameSection({ session }) {
 							"Eliminar",
 						),
 					),
+					buildHints({ store: "tiebreakers", index, rerender: renderTiebreakers }),
 				),
 			);
 		});
