@@ -4,7 +4,7 @@
 // storage knowledge and there is exactly one place that can mutate the PIN, the
 // recovery identity or the preferences.
 
-import { countPublishedActivities, fetchPublishedActivity } from "./core/activities.js";
+import { countPublishedActivities, ensureExampleActivities, fetchPublishedActivity } from "./core/activities.js";
 import { ADMIN_ACCESS, canHonorVerification, createAdminGate, shouldOfferRecoveryFile } from "./core/admin-gate.js";
 import { openDatabase, readSetting, writeSetting } from "./core/db.js";
 import { createPinRecord, isPinRecord, normalizePin, verifyPin } from "./core/pin.js";
@@ -232,6 +232,7 @@ async function buildAdmin(route) {
 	const publishedCount = section === "config" ? 0 : await countPublishedActivities(state.db);
 	return renderAdmin({
 		section,
+		db: state.db,
 		prefs: state.prefs,
 		publishedCount,
 		downloaded: recoveryDownloaded(),
@@ -323,6 +324,13 @@ export async function bootstrap() {
 		state.db = await openDatabase();
 		state.prefs = readStoredPrefs();
 		state.security = await readSetting(state.db, SECURITY_KEY);
+		// Seeding is a convenience, not a requirement: a failure here must not keep the
+		// moderator out of the app, so it is reported by the absence of the example.
+		try {
+			await ensureExampleActivities(state.db);
+		} catch {
+			/* the editor can still create activities from scratch */
+		}
 	} catch (error) {
 		applyPrefsToDocument(state.prefs);
 		root.replaceChildren(

@@ -5,6 +5,7 @@
 import { ADMIN_SECTIONS, SECTION_LABELS } from "../core/router.js";
 import { el } from "./dom.js";
 import { renderSecurityGroup } from "./security.js";
+import { mountSopaSection } from "./sopa-admin.js";
 
 function renderNav(section) {
 	const nav = el("nav", { class: "admin-nav", "aria-label": "Secciones de administración" });
@@ -31,7 +32,7 @@ function renderGameSection(section, publishedCount) {
 			{},
 			publishedCount > 0
 				? "Hay una actividad publicada. La edición de actividades de esta versión llega en la siguiente fase del proyecto."
-				: `Todavía no hay actividades de ${label}. La biblioteca, el editor y la publicación llegan en la siguiente fase del proyecto.`,
+				: `Todavía no hay actividades de ${label}. El motor y el editor de este juego llegan en la siguiente fase del proyecto.`,
 		),
 		el("p", { class: "field__hint" }, "Este panel ya guarda sus datos en el dispositivo y se protege con el PIN."),
 	);
@@ -122,15 +123,15 @@ function renderDataGroup() {
 	);
 }
 
-export function renderAdmin({ section, prefs, publishedCount = 0, downloaded = false, actions }) {
-	const content =
-		section === "config"
-			? [
-					renderAppearanceGroup({ prefs, onChange: actions.changePrefs }),
-					renderSecurityGroup({ downloaded, actions }),
-					renderDataGroup(),
-				]
-			: [renderGameSection(section, publishedCount)];
+export function renderAdmin({ section, prefs, publishedCount = 0, downloaded = false, actions, db }) {
+	let content;
+	if (section === "config") {
+		content = [renderAppearanceGroup({ prefs, onChange: actions.changePrefs }), renderSecurityGroup({ downloaded, actions }), renderDataGroup()];
+	} else if (section === "sopa" && db) {
+		content = [mountSopaSection({ db }).element];
+	} else {
+		content = [renderGameSection(section, publishedCount)];
+	}
 
 	return el(
 		"main",

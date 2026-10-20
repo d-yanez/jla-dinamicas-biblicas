@@ -24,6 +24,22 @@ Estado: **Fase 1** en implementación. Los `S#` citan el documento maestro textu
 - **S14.** "Evita dependencias de CDN en tiempo de ejecución."
 - **S15.** "Los datos pueden perderse si el usuario limpia el navegador: avisar claramente."
 
+### Fase 2 — Modelo de actividades, borradores y motor de sopa de letras
+
+- **S16.** Roadmap, fase 2 — criterio de salida: "20×20 exacto, 10 palabras válidas y coordenadas guardadas, variantes previsualizables".
+- **S17.** "Cuadrícula **20×20** con **10 palabras administrables**; dificultad media, ubicaciones horizontal, vertical y diagonal, incluidas direcciones inversas."
+- **S18.** "Verificar cada ubicación y guardar exactamente 400 caracteres, diez respuestas, posiciones inicial/final y dirección."
+- **S19.** "Permitir generar variantes, previsualizar solución de cada una y publicar solo una aprobada; permitir ordenar manualmente la secuencia de palabras."
+- **S20.** "Evitar regenerar la cuadrícula al jugar, imprimir, recargar o restaurar."
+- **S21.** "Cada actividad contiene identificador estable, tipo de juego, nombre, tema bíblico, referencia bíblica opcional, enseñanza opcional, instrucciones introductorias editables, reflexión bíblica final opcional y referencia, nombre del evento opcional y fecha opcional."
+- **S22.** "Instrucciones basadas en plantilla por juego, con duración de reloj interpolada dinámicamente."
+- **S23.** "Edición de actividad publicada crea **borrador independiente** y jamás cambia el contenido publicado hasta aprobación explícita. Duplicar produce borrador independiente."
+- **S24.** "Borradores con autoguardado tras breve inactividad, indicador y **Guardar ahora**; nunca autopublicar."
+- **S25.** "Publicación requiere validación estricta de campos esenciales, mostrando errores específicos; ensayo completo recomendado pero opcional, indicador de «probado» invalidado al modificar contenido relevante."
+- **S26.** "Las diez rondas usan una duración común por actividad, **30 s predeterminados, configurable de 10 a 120 s**".
+- **S27.** "Una actividad publicada por juego como máximo."
+- **S28.** "Dos actividades completas de ejemplo, una por juego, sobre ayuno y oración, editables, disponibles para ensayo, **no publicadas automáticamente**."
+
 ## Tasks
 
 | ID | Spec | Tarea | Ruta | Commit |
@@ -38,6 +54,14 @@ Estado: **Fase 1** en implementación. Los `S#` citan el documento maestro textu
 | T8 | S13 | README con ejecución local y publicación en subruta | inline | sin repo git (L3.8) |
 | T9 | S1, S4, S5, S12 | Verificación independiente del guard de acceso y endurecimiento de los defectos reportados | inline | sin repo git (L3.8) |
 | T10 | S13 | Repositorio público, commit inicial y publicación en GitHub Pages verificada | inline | b343b2d (fase 1) |
+| T11 | S21, S25 | Modelo de actividades, validación estricta y firma de contenido relevante, con tests | inline | pendiente |
+| T12 | S17, S18 | Motor de sopa: generación determinista 20×20, verificación de ubicaciones, con tests | inline | pendiente |
+| T13 | S19, S20 | Variantes: generación, aprobación de una sola e invalidación al cambiar palabras, con tests | inline | pendiente |
+| T14 | S22 | Instrucciones por plantilla con duración interpolada, con tests | inline | pendiente |
+| T15 | S28 | Actividad de ejemplo de sopa (ayuno y oración), borrador, con variante aprobada | inline | pendiente |
+| T16 | S19, S23, S24 | Editor de sopa: campos, orden manual de palabras, autoguardado e indicador, vista previa de variantes | inline | pendiente |
+| T17 | S16 | Verificación: unitarios + smoke de navegador extendido a fase 2 | inline | pendiente |
+| T18 | S13 | Commit, push y verificación del sitio publicado | inline | pendiente |
 
 Evidencia de cierre de fase 1: `node --test tests/*.test.mjs` → 48/48; `node tests/browser-smoke.mjs` → 15/15 verificaciones en Chromium, 3 corridas consecutivas verdes; verificación independiente (`gentle-ai-verify`) sin defectos restantes; capturas reales en `docs/capturas/`.
 
@@ -127,3 +151,17 @@ Veredicto final del verificador: **no quedan defectos**. Evidencia final: 48/48 
 
 
 
+
+**L12** — Fase 2 cerrada. Entregado: modelo de actividades con validación estricta y firma de contenido relevante, motor de sopa determinista (400 letras A–Z, diez ubicaciones verificadas, ocho direcciones), variantes con aprobación única, instrucciones por plantilla con la duración interpolada, repositorio de actividades con siembra del ejemplo de ayuno y oración (borrador, con cuadrícula aprobada, nunca publicada), y editor completo con autoguardado, orden manual de palabras, vista de solución coloreada con tabla de coordenadas y verificación de requisitos.
+
+Defectos encontrados durante la verificación de esta fase (los tres corregidos):
+
+1. **Código basura en el botón ↑**: quedó un intercambio inválido (`word0(...)` inexistente) que además corrompía el orden de las palabras si hubiera compilado. Detectado por el análisis estático antes de ejecutar nada; reemplazado por `swapWords`.
+2. **`normalized: ""` tratado como palabra válida**: la siembra del ejemplo construía las palabras con `normalized` vacío y `prepareWords` tomaba ese vacío como valor (`??` no cae con cadena vacía). Resultado: la generación del ejemplo fallaba **en silencio**, el ejemplo se guardaba sin cuadrícula y el listado decía «sin cuadrícula aprobada». Corregido con `wordText()` en `letters.js` (un `normalized` vacío significa «sin calcular», no «palabra vacía»), aplicado en `prepareWords`, `placementsCoverWords`, `variantCoversWords` y `wordsSignature`.
+3. **Aserción débil en el smoke**: `/cuadrícula aprobada/` también coincidía con «**sin** cuadrícula aprobada», así que el test pasaba con el ejemplo roto. Endurecida a `/· cuadrícula aprobada/`.
+
+Lección de orden: el defecto 2 lo encontró el smoke de navegador y no los unitarios, porque los unitarios probaban el motor con palabras bien formadas y nunca con el registro exacto que produce la siembra. Se agregaron dos pruebas de regresión: `normalized` vacío con texto válido, y la semilla fija del ejemplo de fase 2.
+
+Evidencia: `node --test tests/*.test.mjs` → 84/84; `node tests/browser-smoke.mjs` → 22/22 (15 de fase 1 + 7 de fase 2). Capturas en `docs/capturas/sopa-lista.png`, `sopa-editor.png` y `sopa-solucion.png`.
+
+**Estado al pausar (2026-10-20):** fases 1 y 2 terminadas y verificadas; commit y push hechos, despliegue verificado contra la URL real. Próxima tarea: **fase 3 — motor de palabras desordenadas** (10 soluciones y anagramas validados por multiconjunto de letras, hasta dos pistas por palabra, tres desempates, y recién ahí la actividad de ejemplo de ese juego). Nada de la fase 3 está escrito todavía.

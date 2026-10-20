@@ -245,6 +245,66 @@ try {
 		}
 	});
 
+	await step("el ejemplo de sopa aparece como borrador con cuadrícula aprobada", async () => {
+		await page.getByRole("link", { name: "Sopa de letras", exact: true }).click();
+		await page.getByRole("heading", { name: "Actividades de sopa de letras" }).waitFor();
+		const row = page.locator(".activity-row").filter({ hasText: "Sopa de letras: Ayuno y oración" });
+		await row.waitFor();
+		const rowText = await row.textContent();
+		assert.match(rowText, /Borrador/u);
+		assert.match(rowText, /10 palabras/u);
+		assert.match(rowText, /· cuadrícula aprobada/u, "el ejemplo debe traer una cuadrícula aprobada");
+	});
+
+	await step("el editor muestra diez palabras y una cuadrícula de 400 celdas", async () => {
+		await page.getByRole("button", { name: "Abrir" }).first().click();
+		await page.getByRole("heading", { name: "Sopa de letras: Ayuno y oración" }).waitFor();
+		assert.equal(await page.locator('input[aria-label^="Palabra "]').count(), 10);
+		assert.equal(await page.locator(".sopa-grid__cell").count(), 400);
+		assert.equal(await page.getByRole("button", { name: /Variante 1/u }).count(), 1);
+		assert.match(await page.locator(".variant-strip").textContent(), /Aprobada/u);
+	});
+
+	await step("ver la solución colorea las palabras y lista sus coordenadas", async () => {
+		await page.getByRole("button", { name: "Ver solución" }).click();
+		assert.ok((await page.locator(".sopa-grid__cell--solved").count()) >= 10, "debe colorear las celdas de las diez palabras");
+		assert.equal(await page.locator(".solution-table tbody tr").count(), 10);
+		assert.match(await page.locator(".solution-table tbody").textContent(), /(horizontal|vertical|diagonal)/u);
+		await page.getByRole("button", { name: "Ocultar solución" }).click();
+		assert.equal(await page.locator(".sopa-grid__cell--solved").count(), 0);
+	});
+
+	await step("los requisitos de publicación se verifican con mensajes concretos", async () => {
+		await page.getByRole("button", { name: "Verificar requisitos" }).click();
+		await page.getByText("La actividad cumple todos los requisitos", { exact: false }).waitFor();
+	});
+
+	await step("cambiar una palabra descarta las variantes y lo avisa", async () => {
+		await page.locator('input[aria-label="Palabra 1"]').fill("Ayunos");
+		await page.getByText("Las palabras cambiaron", { exact: false }).waitFor({ timeout: 5000 });
+		assert.equal(await page.locator(".variant-strip").count(), 0);
+	});
+
+	await step("generar variantes produce tres cuadrículas y se puede aprobar una", async () => {
+		await page.getByRole("button", { name: "Generar variantes" }).click();
+		await page.getByRole("button", { name: /Variante 3/u }).waitFor();
+		assert.equal(await page.locator(".sopa-grid__cell").count(), 400);
+		await page.getByRole("button", { name: "Aprobar esta variante" }).click();
+		await page.locator(".variant-strip").getByText("Aprobada", { exact: true }).waitFor();
+	});
+
+	await step("el borrador persiste tras recargar con su palabra y su variante aprobada", async () => {
+		await page.reload();
+		await page.getByRole("heading", { name: "Panel de administración" }).waitFor();
+		await page.locator('input[inputmode="numeric"]').first().fill("5678");
+		await page.getByRole("button", { name: "Entrar" }).click();
+		await page.getByRole("button", { name: "Abrir" }).first().click();
+		await page.getByRole("heading", { name: "Sopa de letras: Ayuno y oración" }).waitFor();
+		assert.equal(await page.locator('input[aria-label="Palabra 1"]').inputValue(), "Ayunos");
+		assert.match(await page.locator(".variant-strip").textContent(), /Aprobada/u);
+		assert.equal(await page.locator(".sopa-grid__cell").count(), 400);
+	});
+
 	await step("en móvil no hay desborde horizontal y las tarjetas se apilan", async () => {
 		const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
 		const mobilePage = await mobileContext.newPage();

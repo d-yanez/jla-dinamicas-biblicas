@@ -105,6 +105,22 @@ export async function deleteSetting(db, key) {
 	await runTransaction(db, "settings", "readwrite", (store) => store.delete(key));
 }
 
+/** Inserts or replaces one row of any store, returning the stored value. */
+export async function putRow(db, storeName, value) {
+	await runTransaction(db, storeName, "readwrite", (store) => store.put(value));
+	return value;
+}
+
+/** Reads one row by key, or undefined when it does not exist. */
+export function getRow(db, storeName, key) {
+	return runTransaction(db, storeName, "readonly", (store) => store.get(key));
+}
+
+/** Deletes one row by key. */
+export async function removeRow(db, storeName, key) {
+	await runTransaction(db, storeName, "readwrite", (store) => store.delete(key));
+}
+
 /** All rows of a store, as an array. */
 export function getAll(db, storeName) {
 	return new Promise((resolve, reject) => {
