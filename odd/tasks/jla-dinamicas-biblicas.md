@@ -37,6 +37,7 @@ Estado: **Fase 1** en implementación. Los `S#` citan el documento maestro textu
 | T7 | S1 | Verificación: tests unitarios RED→GREEN, smoke de módulos, navegador real | inline | sin repo git (L3.8) |
 | T8 | S13 | README con ejecución local y publicación en subruta | inline | sin repo git (L3.8) |
 | T9 | S1, S4, S5, S12 | Verificación independiente del guard de acceso y endurecimiento de los defectos reportados | inline | sin repo git (L3.8) |
+| T10 | S13 | Repositorio público, commit inicial y publicación en GitHub Pages verificada | inline | b343b2d (fase 1) |
 
 Evidencia de cierre de fase 1: `node --test tests/*.test.mjs` → 48/48; `node tests/browser-smoke.mjs` → 15/15 verificaciones en Chromium, 3 corridas consecutivas verdes; verificación independiente (`gentle-ai-verify`) sin defectos restantes; capturas reales en `docs/capturas/`.
 
@@ -114,5 +115,15 @@ Verificación posterior: 40/40 unitarias y 3 corridas consecutivas del smoke de 
 Aprendizaje de diseño: desbloquear y ofrecer el archivo de recuperación son decisiones distintas. Cambiar el PIN invalida el archivo anterior, así que el archivo nuevo se ofrece siempre que el moderador esté dentro del panel desbloqueado (`shouldOfferRecoveryFile`), aunque el desbloqueo de esa operación haya quedado obsoleto por una navegación interna.
 
 Veredicto final del verificador: **no quedan defectos**. Evidencia final: 48/48 unitarias, 15/15 de navegador, 3 corridas consecutivas verdes.
+
+**L10** — Publicación (decisión del usuario en L9 de la conversación: hacer `git init`, subir y publicar en Pages, repo público).
+
+- Repo: `d-yanez/jla-dinamicas-biblicas`, público, sitio en <https://d-yanez.github.io/jla-dinamicas-biblicas/>.
+- Commit inicial `b343b2d` como **unidad de trabajo de la fase 1**: los archivos de la fase son interdependientes (los tests importan los módulos), así que commits intermedios no pasarían la suite. Desde la fase 2 se comitea por tarea.
+- `.gitignore` excluye `.DS_Store`, `.atl/` (registro de skills local), `node_modules/` y dos artefactos locales (`deepseek-only-lite.profile.json`, `tests/.foreign-recovery.json`).
+- El push falló primero por dos motivos distintos: SSH sin clave disponible en el shell (`Permission denied (publickey)`) y, por HTTPS, `HTTP/2` devolvía 400 en el `git-receive-pack`. Resuelto con el credential helper de `gh` y `http.version=HTTP/1.1` fijado en la config local del repo.
+- Pages: *Deploy from a branch* → `main` / raíz, `status=built`, HTTPS aplicado.
+- Criterio 15 verificado **contra el sitio real**, no solo local: `JLA_BASE_URL=https://d-yanez.github.io/jla-dinamicas-biblicas/ node tests/browser-smoke.mjs` → 15/15.
+
 
 

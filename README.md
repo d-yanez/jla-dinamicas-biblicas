@@ -4,6 +4,8 @@ Aplicación web estática para las dinámicas bíblicas presenciales del grupo j
 
 Sin backend, sin cuentas, sin servicios de pago y sin dependencias en tiempo de ejecución. Toda la información vive en el navegador del dispositivo.
 
+**Publicada en:** <https://d-yanez.github.io/jla-dinamicas-biblicas/>
+
 > **Estado: fase 1 de 10 terminada y verificada.** La portada, el panel de administración y el acceso con PIN funcionan; los juegos, los temporizadores, la impresión y los respaldos llegan en las fases siguientes (ver [Roadmap](#roadmap)).
 
 ![Portada](docs/capturas/portada.png)
@@ -46,6 +48,12 @@ node tests/browser-smoke.mjs
 ```
 
 El segundo comando es una herramienta de desarrollo: levanta su propio servidor estático, recorre el flujo completo de fase 1 y falla si la consola del navegador registra un error. Requiere Playwright instalado (`npm i -g playwright && playwright install chromium`); **la aplicación publicada no lo usa**.
+
+Para validar el sitio ya publicado, apuntalo a la URL real:
+
+```bash
+JLA_BASE_URL=https://d-yanez.github.io/jla-dinamicas-biblicas/ node tests/browser-smoke.mjs
+```
 
 Qué cubre la verificación de navegador: portada y tarjetas, `Jugar` sin actividad publicada, creación y confirmación del PIN, descarga y formato del archivo de recuperación, preferencias de tamaño y contraste, persistencia tras recarga, PIN incorrecto, cierre de sesión, importación del archivo de recuperación con PIN nuevo, rechazo de un archivo de otro dispositivo y ausencia de desborde horizontal en móvil.
 
