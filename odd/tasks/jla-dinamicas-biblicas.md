@@ -165,3 +165,20 @@ Lección de orden: el defecto 2 lo encontró el smoke de navegador y no los unit
 Evidencia: `node --test tests/*.test.mjs` → 84/84; `node tests/browser-smoke.mjs` → 22/22 (15 de fase 1 + 7 de fase 2). Capturas en `docs/capturas/sopa-lista.png`, `sopa-editor.png` y `sopa-solucion.png`.
 
 **Estado al pausar (2026-10-20):** fases 1 y 2 terminadas y verificadas; commit y push hechos, despliegue verificado contra la URL real. Próxima tarea: **fase 3 — motor de palabras desordenadas** (10 soluciones y anagramas validados por multiconjunto de letras, hasta dos pistas por palabra, tres desempates, y recién ahí la actividad de ejemplo de ese juego). Nada de la fase 3 está escrito todavía.
+
+**L13** — Bug reportado por el usuario al validar la fase 2: «he actualizado palabras, pero luego no se actualiza la cuadrícula» (con dos capturas: palabras editadas y una cuadrícula que seguía ubicando `SILENCIO` y `PERSEVERANCIA` ya reemplazadas).
+
+Causa raíz: `wordText()` en `letters.js` prefería el campo `normalized` (caché) sobre `text` (lo que el moderador escribe). Al editar una palabra y generar variantes antes de que corriera el autoguardado, el motor ubicaba **la palabra anterior**. Reproducido en test unitario: `wordText({ text: "Consagración", normalized: "SILENCIO" })` devolvía `SILENCIO`.
+
+Correcciones:
+1. `wordText()` ahora trata `text` como fuente de verdad y `normalized` como caché; solo cae al `normalized` cuando no hay texto (datos antiguos).
+2. El editor sincroniza `normalized` en cada tecla, así ninguna caché queda vieja.
+3. Aviso **inmediato** al editar: «La cuadrícula no coincide con las palabras actuales. Actualizá la cuadrícula…», con el botón cambiando a **«Actualizar la cuadrícula»**, y el badge de la variante aprobada pasando a «Aprobada, pero desactualizada» en vez de mentir. No se puede aprobar una cuadrícula desactualizada.
+4. Un resultado de «cumple todos los requisitos» se borra en cuanto el contenido cambia: un veredicto viejo a la vista es peor que ninguno.
+5. La celda de la solución expone `data-word` con la palabra **ubicada** (no el texto actual), que es la evidencia real de qué se ubicó.
+
+Lecciones de verificación (dos fallos del propio test, no de la app):
+- El smoke esperaba `/Las palabras cambiaron/`, texto que ahora también emitía el aviso inmediato: medía antes del autoguardado. Se separaron los mensajes y el test verifica ambos, en orden.
+- La primera aserción comprobaba el texto de la tabla de soluciones, que muestra el texto **actual** de la palabra: no probaba nada sobre lo ubicado. Reemplazada por `data-word`, que falla si el motor usa la palabra vieja.
+
+Evidencia: `node --test tests/*.test.mjs` → 88/88 (4 pruebas nuevas en `tests/stale-word.test.mjs`); `node tests/browser-smoke.mjs` → 23/23 (nueva verificación: «la cuadrícula regenerada ubica la palabra editada, no la anterior»).

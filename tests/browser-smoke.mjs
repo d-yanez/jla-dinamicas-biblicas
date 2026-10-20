@@ -279,10 +279,16 @@ try {
 		await page.getByText("La actividad cumple todos los requisitos", { exact: false }).waitFor();
 	});
 
-	await step("cambiar una palabra descarta las variantes y lo avisa", async () => {
+	await step("al cambiar una palabra avisa al instante y luego descarta las variantes", async () => {
 		await page.locator('input[aria-label="Palabra 1"]').fill("Ayunos");
-		await page.getByText("Las palabras cambiaron", { exact: false }).waitFor({ timeout: 5000 });
+		// 1) Immediate feedback: the grid is still visible but already known to be stale.
+		await page.getByText("La cuadrícula no coincide con las palabras actuales", { exact: false }).waitFor({ timeout: 3000 });
+		await page.getByRole("button", { name: "Actualizar la cuadrícula" }).waitFor({ timeout: 3000 });
+		await page.getByText("Aprobada, pero desactualizada", { exact: true }).waitFor();
+		// 2) After the autosave the mismatched variants are gone and the result is announced.
+		await page.getByText("Las palabras cambiaron: las variantes anteriores se descartaron", { exact: false }).waitFor({ timeout: 5000 });
 		assert.equal(await page.locator(".variant-strip").count(), 0);
+		assert.equal(await page.getByText("cumple todos los requisitos", { exact: false }).count(), 0, "un resultado viejo no debe quedar a la vista");
 	});
 
 	await step("generar variantes produce tres cuadrículas y se puede aprobar una", async () => {
@@ -291,6 +297,21 @@ try {
 		assert.equal(await page.locator(".sopa-grid__cell").count(), 400);
 		await page.getByRole("button", { name: "Aprobar esta variante" }).click();
 		await page.locator(".variant-strip").getByText("Aprobada", { exact: true }).waitFor();
+	});
+
+	await step("la cuadrícula regenerada ubica la palabra editada, no la anterior", async () => {
+		await page.getByRole("button", { name: "Ver solución" }).click();
+		await page.locator(".sopa-grid__cell--solved").first().waitFor();
+		assert.ok(
+			(await page.locator('.sopa-grid__cell[data-word="AYUNOS"]').count()) > 0,
+			"la cuadrícula debe ubicar AYUNOS, la palabra editada",
+		);
+		assert.equal(
+			await page.locator('.sopa-grid__cell[data-word="AYUNO"]').count(),
+			0,
+			"no debe quedar ubicada la palabra reemplazada",
+		);
+		await page.getByRole("button", { name: "Ocultar solución" }).click();
 	});
 
 	await step("el borrador persiste tras recargar con su palabra y su variante aprobada", async () => {

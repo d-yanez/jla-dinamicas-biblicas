@@ -38,13 +38,18 @@ export function renderSopaGrid({ variant, highlights = new Map(), label = "Cuadr
 		tr.append(el("th", { class: "sopa-grid__head", scope: "row" }, String(row + 1)));
 		for (let col = 0; col < size; col += 1) {
 			const index = row * size + col;
-			const colorIndex = highlights.get(index);
+			const highlight = highlights.get(index);
 			const cell = el(
 				"td",
-				{ class: colorIndex === undefined ? "sopa-grid__cell" : "sopa-grid__cell sopa-grid__cell--solved" },
+				{ class: highlight === undefined ? "sopa-grid__cell" : "sopa-grid__cell sopa-grid__cell--solved" },
 				variant.grid[index] ?? "",
 			);
-			if (colorIndex !== undefined) cell.style.setProperty("--cell-color", SOLUTION_COLORS[colorIndex % SOLUTION_COLORS.length]);
+			if (highlight !== undefined) {
+				cell.style.setProperty("--cell-color", SOLUTION_COLORS[highlight.order % SOLUTION_COLORS.length]);
+				// The placed word, not the visible text: this is what proves the grid was
+				// generated from the current words and not from an older version of them.
+				cell.dataset.word = highlight.word;
+			}
 			tr.append(cell);
 		}
 		body.append(tr);
@@ -53,7 +58,7 @@ export function renderSopaGrid({ variant, highlights = new Map(), label = "Cuadr
 	return table;
 }
 
-/** Cell index → color slot, for every word of the variant. */
+/** Cell index → { color slot, placed word } for every word of the variant. */
 export function solutionHighlights(variant) {
 	const highlights = new Map();
 	(variant?.placements ?? []).forEach((placement, order) => {
@@ -63,7 +68,7 @@ export function solutionHighlights(variant) {
 			directionId: placement.direction,
 			length: placement.normalized.length,
 		});
-		for (const index of cells ?? []) highlights.set(index, order);
+		for (const index of cells ?? []) highlights.set(index, { order, word: placement.normalized });
 	});
 	return highlights;
 }

@@ -38,10 +38,15 @@ export function randomLetter(prng) {
 }
 
 /**
- * The text to normalize for a word record. A computed `normalized` wins, but an empty
- * one means "not computed yet", not "empty word": in that case the original text is used.
+ * The text to normalize for a word record.
+ *
+ * `text` is the source of truth and `normalized` is only a cache of it. Preferring the
+ * cache made the engine place the previous word after an edit that had not been saved
+ * yet — the grid looked like it never updated. A record without text (older data) still
+ * falls back to its normalized form.
  */
 export function wordText(word) {
+	if (typeof word?.text === "string" && word.text.trim().length > 0) return word.text;
 	if (typeof word?.normalized === "string" && word.normalized.length > 0) return word.normalized;
-	return word?.text;
+	return undefined;
 }

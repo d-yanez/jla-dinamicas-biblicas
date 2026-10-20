@@ -17,7 +17,7 @@ import { getActivity, listActivities, saveActivity } from "../core/activities.js
 import { createId } from "../core/ids.js";
 import { defaultInstructionsFor, renderInstructions } from "../core/instructions.js";
 import { normalizeWord } from "../core/letters.js";
-import { SOPA_WORD_COUNT, generateVariant } from "../core/sopa.js";
+import { SOPA_WORD_COUNT, generateVariant, variantCoversWords } from "../core/sopa.js";
 import { confirmDialog } from "./common.js";
 import { clear, el, uniqueId } from "./dom.js";
 import { formatDateTime } from "./format.js";
@@ -78,6 +78,12 @@ export function mountSopaSection({ db }) {
 	function markDirty() {
 		state.saveState = "dirty";
 		updateSaveIndicator();
+		// A previous requirement check stops being true the moment content changes; a
+		// stale "cumple todos los requisitos" would be worse than none.
+		if (state.requirements) {
+			state.requirements = undefined;
+			if (nodes.requirements) clear(nodes.requirements);
+		}
 		window.clearTimeout(saveTimer);
 		saveTimer = window.setTimeout(() => {
 			void flush();
@@ -163,8 +169,23 @@ export function mountSopaSection({ db }) {
 		const box = nodes.variants;
 		if (!box?.isConnected || !state.draft) return;
 		clear(box);
+		nodes.approvedBadge = undefined;
+		nodes.approveButton = undefined;
 		const draft = state.draft;
 		const variants = draft.game.variants;
+		const stale = variants.length > 0 && variants.some((variant) => !variantCoversWords(variant, draft.game.words));
+		const warning = el(
+			"p",
+			{ class: "notice notice--warn", role: "status", hidden: !stale },
+			"La cuadrícula no coincide con las palabras actuales. Actualizá la cuadrícula para que las ubicaciones sean las nuevas.",
+		);
+		const generateButton = el(
+			"button",
+			{ class: "btn btn--primary btn--small", type: "button", onclick: () => void generateVariants() },
+			stale ? "Actualizar la cuadrícula" : "Generar variantes",
+		);
+		nodes.variantWarning = warning;
+		nodes.generateButton = generateButton;
 		box.append(
 			el(
 				"div",
@@ -181,8 +202,9 @@ export function mountSopaSection({ db }) {
 							: `${variants.length} ${variants.length === 1 ? "variante" : "variantes"}. La aprobada es la que se usa al jugar e imprimir.`,
 					),
 				),
-				el("button", { class: "btn btn--primary btn--small", type: "button", onclick: () => void generateVariants() }, "Generar variantes"),
+				generateButton,
 			),
+			warning,
 		);
 		if (variants.length === 0) {
 			box.append(
@@ -217,6 +239,15 @@ export function mountSopaSection({ db }) {
 		const variant = variants.find((candidate) => candidate.id === state.variantId) ?? variants[0];
 		if (!variant) return;
 		const approved = variant.id === draft.game.approvedVariantId;
+		const approveControl = approved
+			? el("span", { class: "badge badge--gold" }, stale ? "Aprobada, pero desactualizada" : "Variante aprobada")
+			: el(
+					"button",
+					{ class: "btn btn--primary btn--small", type: "button", disabled: stale, onclick: () => void approve(variant) },
+					"Aprobar esta variante",
+				);
+		if (approved) nodes.approvedBadge = approveControl;
+		else nodes.approveButton = approveControl;
 		box.append(
 			el(
 				"div",
@@ -234,9 +265,7 @@ export function mountSopaSection({ db }) {
 					},
 					state.showSolution ? "Ocultar solución" : "Ver solución",
 				),
-				approved
-					? el("span", { class: "badge badge--gold" }, "Variante aprobada")
-					: el("button", { class: "btn btn--primary btn--small", type: "button", onclick: () => void approve(variant) }, "Aprobar esta variante"),
+				approveControl,
 			),
 		);
 		box.append(
@@ -283,6 +312,18 @@ export function mountSopaSection({ db }) {
 				),
 			);
 		}
+	}
+
+	/** Light update used while typing: never rebuilds the 400-cell grid. */
+	function refreshVariantStaleness() {
+		const draft = state.draft;
+		if (!draft) return;
+		const variants = draft.game.variants;
+		const stale = variants.length > 0 && variants.some((variant) => !variantCoversWords(variant, draft.game.words));
+		if (nodes.variantWarning) nodes.variantWarning.hidden = !stale;
+		if (nodes.generateButton) nodes.generateButton.textContent = stale ? "Actualizar la cuadrícula" : "Generar variantes";
+		if (nodes.approveButton) nodes.approveButton.disabled = stale;
+		if (nodes.approvedBadge) nodes.approvedBadge.textContent = stale ? "Aprobada, pero desactualizada" : "Variante aprobada";
 	}
 
 	async function approve(variant) {
@@ -506,8 +547,13 @@ export function mountSopaSection({ db }) {
 					maxlength: "20",
 				});
 				input.addEventListener("input", () => {
-					draft.game.words[index].text = input.value;
-					normalizedHint.textContent = normalizeWord(input.value) ?? "—";
+					const word = draft.game.words[index];
+					word.text = input.value;
+					// Keep the cache equal to the text at every keystroke: a stale normalized
+					// made the engine place the previous word when generating before the save.
+					word.normalized = normalizeWord(input.value) ?? "";
+					normalizedHint.textContent = word.normalized.length > 0 ? word.normalized : "—";
+					refreshVariantStaleness();
 					markDirty();
 				});
 				list.append(
