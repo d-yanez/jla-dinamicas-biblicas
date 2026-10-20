@@ -92,6 +92,9 @@ try {
 	page.on("pageerror", (error) => problems.push(`pageerror: ${error.message}`));
 
 	const pinInputs = () => page.locator('input[inputmode="numeric"]');
+	// The engine ignores two advances closer than 300 ms on purpose: the smoke must pace
+	// its clicks like a person, not like a machine.
+	const settle = () => page.waitForTimeout(400);
 	const enterAdmin = async () => page.getByRole("link", { name: "Administrar" }).click();
 
 	await step("la portada muestra dos tarjetas Jugar y el engranaje discreto", async () => {
@@ -279,15 +282,15 @@ try {
 		await page.getByText("La actividad cumple todos los requisitos", { exact: false }).waitFor();
 	});
 
-	await step("al cambiar una palabra se descartan las variantes y se avisa", async () => {
+	await step("al cambiar una palabra se retira la aprobación y se conserva la cuadrícula", async () => {
 		await page.locator('input[aria-label="Palabra 1"]').fill("Ayunos");
 		// Only the settled state is asserted here. The transient warning shown while typing
 		// lasts until the 800 ms autosave lands, so asserting it would race the save; the
 		// rule behind it (a grid that does not cover the words is stale) is unit-tested.
 		await page
-			.getByText("Las palabras cambiaron: las variantes anteriores se descartaron", { exact: false })
+			.getByText("la aprobación se retiró porque la cuadrícula ya no coincide", { exact: false })
 			.waitFor({ timeout: 8000 });
-		assert.equal(await page.locator(".variant-strip").count(), 0);
+		assert.equal(await page.locator(".variant-strip").count(), 1, "la cuadrícula se conserva: no se destruye trabajo");
 		assert.equal(
 			await page.getByText("cumple todos los requisitos", { exact: false }).count(),
 			0,
@@ -296,7 +299,7 @@ try {
 	});
 
 	await step("generar variantes produce tres cuadrículas y se puede aprobar una", async () => {
-		await page.getByRole("button", { name: "Generar variantes" }).click();
+		await page.getByRole("button", { name: /Generar variantes|Actualizar la cuadrícula/u }).click();
 		await page.getByRole("button", { name: /Variante 3/u }).waitFor();
 		assert.equal(await page.locator(".sopa-grid__cell").count(), 400);
 		await page.getByRole("button", { name: "Aprobar esta variante" }).click();
@@ -361,6 +364,9 @@ try {
 			return rows.find((row) => row.type === "sopa")?.game.words.map((word) => word.text) ?? [];
 		});
 		assert.deepEqual(stored.slice(0, 2), ["Ayunos", "Oración"], "la segunda edición debe persistir");
+		// Editing a word withdrew the approval; the grid is still there, so approve it again.
+		await page.getByRole("button", { name: "Aprobar esta variante", exact: true }).first().click();
+		await page.locator(".variant-strip").getByText("Aprobada", { exact: true }).waitFor();
 	});
 
 	await step("el ejemplo de palabras desordenadas aparece como borrador con desempates", async () => {
@@ -573,6 +579,105 @@ try {
 		assert.equal(first[0], "O", "en fácil la primera letra queda anclada (ORACION)");
 	});
 
+	await step("publicar deja la actividad disponible para jugar", async () => {
+		await page.getByRole("button", { name: "Publicar", exact: true }).click();
+		await page.locator("dialog").getByRole("button", { name: "Publicar", exact: true }).click();
+		await page.getByText("Publicada", { exact: true }).first().waitFor();
+	});
+
+	await step("la portada ofrece jugar la actividad publicada", async () => {
+		await page.getByRole("link", { name: /ir al inicio/u }).click();
+		await page.getByRole("heading", { name: "JLA Dinámicas Bíblicas" }).waitFor();
+		const card = page.locator(".game-card").filter({ hasText: "Palabras desordenadas" });
+		assert.match(await card.textContent(), /Publicada/u);
+		await card.getByRole("link", { name: "Jugar" }).click();
+		await page.getByRole("heading", { name: "Palabras desordenadas: Ayuno y oración" }).waitFor();
+	});
+
+	await step("la ronda proyecta el anagrama, el reloj y las pistas a demanda", async () => {
+		await page.getByRole("button", { name: "Mostrar palabra" }).click();
+		await page.getByText(/^Ronda 1 de 10/u).waitFor();
+		await page.locator(".play-clock").waitFor();
+		assert.match(await page.locator(".play-target").textContent(), /^[A-Z]+$/u, "solo la palabra desordenada");
+		await page.getByRole("button", { name: "Pista 1", exact: true }).click();
+		await page.locator(".play-hints li").first().waitFor();
+		await page.getByRole("button", { name: "Descubrir una letra", exact: true }).click();
+		await page.locator(".play-pattern").waitFor();
+		assert.match(await page.locator(".play-pattern").textContent(), /_/u, "el patrón muestra posiciones ocultas");
+	});
+
+	await step("el motor responde a pausa, siguiente y retroceder", async () => {
+		await page.getByRole("button", { name: "Pausar", exact: true }).click();
+		await page.getByRole("button", { name: "Reanudar", exact: true }).waitFor();
+		await settle();
+		await page.getByRole("button", { name: /Siguiente palabra/u }).click();
+		await page.getByText(/^Ronda 2 de 10/u).waitFor();
+		await page.getByRole("button", { name: /Retroceder/u }).click();
+		await page.getByText(/^Ronda 1 de 10/u).waitFor();
+	});
+
+	await step("el extra de 60 segundos se inicia a mano tras la décima ronda", async () => {
+		await settle();
+		for (let index = 0; index < 9; index += 1) {
+			await page.getByRole("button", { name: /Siguiente palabra/u }).click();
+			await page.waitForTimeout(350);
+		}
+		await page.getByText(/^Ronda 10 de 10/u).waitFor();
+		await page.getByRole("button", { name: "60 segundos extra", exact: true }).click();
+		await page.getByText(/tiempo extra/u).waitFor();
+	});
+
+	await step("la revisión revela de a una y retroceder no borra lo revelado", async () => {
+		await page.getByRole("button", { name: "Revisar soluciones", exact: true }).click();
+		await page.locator("dialog").getByRole("button", { name: "Mostrar soluciones" }).click();
+		await page.getByText("Reveladas 0 de 10").waitFor();
+		await page.getByRole("button", { name: /Revelar siguiente/u }).click();
+		await page.getByText("Reveladas 1 de 10").waitFor();
+		await settle();
+		await page.getByRole("button", { name: /Revelar siguiente/u }).click();
+		await page.getByText("Reveladas 2 de 10").waitFor();
+		await page.getByRole("button", { name: /Retroceder/u }).click();
+		await page.getByText("Reveladas 1 de 10").waitFor();
+		assert.equal(await page.locator(".review-item").count(), 2, "lo ya revelado sigue a la vista");
+	});
+
+	await step("el cierre pasa por la reflexión y la pantalla de gracias", async () => {
+		await page.getByRole("button", { name: "Cerrar la actividad" }).click();
+		await page.getByRole("heading", { name: /Jesús invita a ayunar/u }).waitFor();
+		await page.getByRole("button", { name: "Continuar" }).click();
+		await page.getByRole("heading", { name: "Gracias por participar" }).waitFor();
+		await page.getByRole("link", { name: "Volver al inicio" }).click();
+		await page.getByRole("heading", { name: "JLA Dinámicas Bíblicas" }).waitFor();
+	});
+
+	await step("la sopa se juega con historial y revisión sobre la cuadrícula", async () => {
+		await page.getByRole("link", { name: "Administrar" }).click();
+		await page.locator('input[inputmode="numeric"]').first().fill("5678");
+		await page.getByRole("button", { name: "Entrar" }).click();
+		await page.getByRole("button", { name: "Abrir" }).first().click();
+		await page.getByRole("heading", { name: "Sopa de letras: Ayuno y oración", exact: true }).waitFor();
+		await page.getByRole("button", { name: "Publicar", exact: true }).click();
+		await page.locator("dialog").getByRole("button", { name: "Publicar", exact: true }).click();
+		await page.getByText("Publicada", { exact: true }).first().waitFor();
+		await page.getByRole("link", { name: /ir al inicio/u }).click();
+		const card = page.locator(".game-card").filter({ hasText: "Sopa de letras" });
+		await card.getByRole("link", { name: "Jugar" }).click();
+		await page.getByRole("heading", { name: "Sopa de letras: Ayuno y oración", exact: true }).waitFor();
+		assert.equal(await page.locator(".sopa-grid__cell").count(), 400, "la introducción muestra la cuadrícula sin resolver");
+		await page.getByRole("button", { name: "Mostrar palabra" }).click();
+		await page.getByText(/^Ronda 1 de 10/u).waitFor();
+		assert.equal(await page.locator(".sopa-grid__cell").count(), 0, "en la ronda se oculta la cuadrícula");
+		await settle();
+		await page.getByRole("button", { name: /Siguiente palabra/u }).click();
+		await page.getByText(/^Ronda 2 de 10/u).waitFor();
+		await page.locator(".play-history li").first().waitFor();
+		await page.getByRole("button", { name: "Revisar soluciones", exact: true }).click();
+		await page.locator("dialog").getByRole("button", { name: "Mostrar soluciones" }).click();
+		await page.getByRole("button", { name: /Revelar siguiente/u }).click();
+		await page.getByText("Reveladas 1 de 10").waitFor();
+		assert.ok((await page.locator(".sopa-grid__cell--solved").count()) > 0, "la solución revelada se pinta en la cuadrícula");
+	});
+
 	await step("un navegador con la marca de siembra antigua recibe el ejemplo nuevo", async () => {
 		// Reproduce the reported state: the phase-2 global marker and only the sopa example.
 		await page.evaluate(async () => {
@@ -596,6 +701,10 @@ try {
 			});
 		});
 		await page.reload();
+		// The play session left the tab outside the admin area; go there explicitly.
+		await page.evaluate(() => {
+			location.hash = "#/admin";
+		});
 		await page.getByRole("heading", { name: "Panel de administración" }).waitFor();
 		await page.locator('input[inputmode="numeric"]').first().fill("5678");
 		await page.getByRole("button", { name: "Entrar" }).click();

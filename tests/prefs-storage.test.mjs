@@ -26,7 +26,7 @@ test("escribir y leer preferencias hace roundtrip síncrono", () => {
 	const storage = fakeStorage();
 	assert.equal(writeStoredPrefs({ displaySize: "normal", highContrast: true }, storage), true);
 	assert.equal(storage.map.has(PREFS_STORAGE_KEY), true);
-	assert.deepEqual(readStoredPrefs(storage), { displaySize: "normal", highContrast: true });
+	assert.deepEqual(readStoredPrefs(storage), { ...DEFAULT_PREFS, displaySize: "normal", highContrast: true });
 });
 
 test("sin datos guardados se usan los valores por defecto", () => {
@@ -39,7 +39,7 @@ test("un valor corrupto o inválido nunca rompe la lectura", () => {
 	assert.deepEqual(readStoredPrefs(fakeStorage({ [PREFS_STORAGE_KEY]: JSON.stringify({ displaySize: "enorme" }) })), DEFAULT_PREFS);
 	assert.deepEqual(
 		readStoredPrefs(fakeStorage({ [PREFS_STORAGE_KEY]: JSON.stringify({ displaySize: "normal", highContrast: "sí" }) })),
-		{ displaySize: "normal", highContrast: false },
+		{ ...DEFAULT_PREFS, displaySize: "normal" },
 	);
 });
 

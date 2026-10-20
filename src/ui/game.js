@@ -8,8 +8,9 @@
 import { GAME_LABELS } from "../core/router.js";
 import { renderEmptyState } from "./common.js";
 import { el } from "./dom.js";
+import { mountPlayScreen } from "./play.js";
 
-export function renderGame({ game, published }) {
+export function renderGame({ game, published, prefs, onPrefsChange }) {
 	const label = GAME_LABELS[game] ?? "Juego";
 	if (!published) {
 		return renderEmptyState({
@@ -19,9 +20,13 @@ export function renderGame({ game, published }) {
 			actions: [el("a", { class: "btn btn--primary", href: "#/" }, "Volver al inicio")],
 		});
 	}
-	return renderEmptyState({
-		title: "La actividad está publicada",
-		description: `La partida de ${label} todavía no está disponible en esta versión de la aplicación.`,
-		actions: [el("a", { class: "btn btn--primary", href: "#/" }, "Volver al inicio")],
-	});
+	const playable = game === "sopa" ? Boolean(published.game?.approvedVariantId) : (published.game?.words?.length ?? 0) > 0;
+	if (!playable) {
+		return renderEmptyState({
+			title: "La actividad publicada está incompleta",
+			description: `Falta completar la actividad de ${label} en el panel de administración: ${game === "sopa" ? "aprobar una variante de la cuadrícula" : "cargar las diez palabras y los tres desempates"}.`,
+			actions: [el("a", { class: "btn btn--primary", href: "#/admin" }, "Ir a administración"), el("a", { class: "btn btn--ghost", href: "#/" }, "Volver al inicio")],
+		});
+	}
+	return mountPlayScreen({ game, activity: published, prefs, onPrefsChange }).element;
 }

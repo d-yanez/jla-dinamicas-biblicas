@@ -4,6 +4,7 @@
 
 import { ACTIVITY_STATUS, ROUND_SECONDS } from "../core/activity-model.js";
 import { defaultInstructionsFor, renderInstructions } from "../core/instructions.js";
+import { confirmDialog } from "./common.js";
 import { clear, el, uniqueId } from "./dom.js";
 import { createDraftSession } from "./draft-session.js";
 import { formatDateTime } from "./format.js";
@@ -178,6 +179,28 @@ export function mountActivityEditor({ db, type, renderGame }) {
 		);
 	}
 
+	async function publish() {
+		const confirmed = await confirmDialog({
+			title: "Publicar esta actividad",
+			message:
+				"El público va a jugar esta actividad desde la portada. Si hay otra publicada de este juego, deja de estarlo. El contenido se valida antes de publicar.",
+			confirmLabel: "Publicar",
+			cancelLabel: "Cancelar",
+		});
+		if (!confirmed) return;
+		await session.publish();
+	}
+
+	async function unpublish() {
+		const confirmed = await confirmDialog({
+			title: "Despublicar",
+			message: "Deja de estar disponible para jugar. El contenido y sus datos se conservan.",
+			confirmLabel: "Despublicar",
+			cancelLabel: "Cancelar",
+		});
+		if (confirmed) await session.unpublish();
+	}
+
 	function renderEditor() {
 		const draft = session.state.draft;
 		clear(root);
@@ -195,12 +218,25 @@ export function mountActivityEditor({ db, type, renderGame }) {
 				el(
 					"div",
 					{ class: "row row--between" },
-					el("div", {}, el("p", { class: "hero__eyebrow" }, `${statusLabel(draft)} · ${copy.label}`), nodes.title),
+					el(
+						"div",
+						{},
+						el(
+							"p",
+							{ class: "hero__eyebrow" },
+							`${statusLabel(draft)} · ${copy.label}`,
+							draft.status === ACTIVITY_STATUS.PUBLISHED ? el("span", { class: "badge badge--gold", style: "margin-left:.5rem" }, "Publicada") : undefined,
+						),
+						nodes.title,
+					),
 					el(
 						"div",
 						{ class: "row" },
 						nodes.indicator,
-						el("button", { class: "btn btn--primary btn--small", type: "button", onclick: () => void session.flush() }, "Guardar ahora"),
+						draft.status === ACTIVITY_STATUS.PUBLISHED
+							? el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => void unpublish() }, "Despublicar")
+							: el("button", { class: "btn btn--primary btn--small", type: "button", onclick: () => void publish() }, "Publicar"),
+						el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => void session.flush() }, "Guardar ahora"),
 						el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => void session.backToList() }, "Volver a la lista"),
 					),
 				),
@@ -290,7 +326,7 @@ export function mountActivityEditor({ db, type, renderGame }) {
 			return;
 		}
 		if (event === "saved") {
-			if (payload?.droppedVariants) session.setNotice("Las palabras cambiaron: las variantes anteriores se descartaron. Generá variantes nuevas.");
+			if (payload?.approvalWithdrawn) session.setNotice("Las palabras cambiaron: la aprobación se retiró porque la cuadrícula ya no coincide. Podés aprobarla de nuevo o generar otra.");
 			game?.onEvent?.("saved", payload);
 			return;
 		}

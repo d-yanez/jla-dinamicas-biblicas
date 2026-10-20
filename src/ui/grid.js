@@ -59,9 +59,9 @@ export function renderSopaGrid({ variant, highlights = new Map(), label = "Cuadr
 }
 
 /** Cell index → { color slot, placed word } for every word of the variant. */
-export function solutionHighlights(variant) {
+export function solutionHighlights(variant, limit = Number.POSITIVE_INFINITY) {
 	const highlights = new Map();
-	(variant?.placements ?? []).forEach((placement, order) => {
+	(variant?.placements ?? []).slice(0, Math.max(0, limit)).forEach((placement, order) => {
 		const cells = pathCells({
 			size: variant.size,
 			start: placement.start,

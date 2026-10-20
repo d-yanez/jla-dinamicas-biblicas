@@ -5,7 +5,7 @@
 // editors cannot drift apart — least of all in the part that writes data.
 
 import { ACTIVITY_STATUS, validateActivity } from "../core/activity-model.js";
-import { getActivity, listActivities, saveActivity } from "../core/activities.js";
+import { getActivity, listActivities, publishActivity, saveActivity, unpublishActivity } from "../core/activities.js";
 import { createActivity } from "../core/activity-model.js";
 
 const SAVE_DELAY_MS = 800;
@@ -16,7 +16,7 @@ const selection = new Map();
 /**
  * Events a view can subscribe to:
  *   "save-state"  the indicator text changed
- *   "saved"       a draft was persisted; { droppedVariants } says the game data changed shape
+ *   "saved"       a draft was persisted; { approvalWithdrawn } says the grid stopped being approved
  *   "notice"      state.notice changed
  *   "title"       the activity name changed
  *   "requirements" a requirement check finished (or was cleared)
@@ -79,16 +79,18 @@ export function createDraftSession({ db, type }) {
 			if (!state.draft) return;
 			state.saveState = "saving";
 			emit("save-state");
-			const before = JSON.stringify(shapeOf(state.draft));
+			const approvedBefore = state.draft.game?.approvedVariantId ?? "";
 			const saved = await saveActivity(db, state.draft);
-			const droppedVariants = before !== JSON.stringify(shapeOf(saved)) && (saved.game.variants ?? []).length === 0;
+			// The grid is kept when a word changes; what the moderator must know is that the
+			// approval was withdrawn because it no longer covers the words.
+			const approvalWithdrawn = approvedBefore.length > 0 && (saved.game.approvedVariantId ?? "") === "";
 			state.draft = saved;
 			state.saveState = "saved";
 			state.lastSavedAt = saved.updatedAt;
 			await session.refreshList();
 			emit("title");
 			emit("save-state");
-			emit("saved", { droppedVariants });
+			emit("saved", { approvalWithdrawn });
 		},
 		async refreshList() {
 			state.activities = await listActivities(db, { type });
@@ -153,6 +155,29 @@ export function createDraftSession({ db, type }) {
 			await session.refreshList();
 			emit("open");
 		},
+		async publish() {
+			if (!state.draft) return { ok: false };
+			await session.flush();
+			const result = await publishActivity(db, state.draft.id);
+			if (!result.ok) {
+				state.requirements = result;
+				emit("requirements");
+				return result;
+			}
+			state.draft = result.activity;
+			await session.refreshList();
+			emit("open");
+			return result;
+		},
+		async unpublish() {
+			if (!state.draft) return undefined;
+			await session.flush();
+			const unpublished = await unpublishActivity(db, state.draft.id);
+			state.draft = unpublished;
+			await session.refreshList();
+			emit("open");
+			return unpublished;
+		},
 		async verifyRequirements() {
 			if (!state.draft) return;
 			await session.refreshList();
@@ -165,11 +190,3 @@ export function createDraftSession({ db, type }) {
 	return session;
 }
 
-/** The shape that matters for "did the save change the game data". */
-function shapeOf(activity) {
-	return {
-		words: (activity?.game?.words ?? []).map((word) => [word.text ?? word.solution ?? "", word.anagram ?? ""]),
-		variants: (activity?.game?.variants ?? []).length,
-		approved: activity?.game?.approvedVariantId ?? "",
-	};
-}

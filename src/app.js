@@ -270,7 +270,12 @@ async function buildMain(route) {
 		return el(
 			"main",
 			{ class: "page", id: "contenido", tabindex: "-1" },
-			renderGame({ game: route.params.game, published }),
+			renderGame({
+				game: route.params.game,
+				published,
+				prefs: state.prefs,
+				onPrefsChange: (patch) => persistPrefs(patch),
+			}),
 		);
 	}
 	if (route.name === "admin") return buildAdmin(route);

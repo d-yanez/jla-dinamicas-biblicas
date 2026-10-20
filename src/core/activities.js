@@ -10,6 +10,7 @@ import {
 	createActivity,
 	normalizeActivity,
 	refreshDerivedState,
+	validateActivity,
 } from "./activity-model.js";
 import { getAll, getRow, putRow, readSetting, writeSetting } from "./db.js";
 import { createId } from "./ids.js";
@@ -59,6 +60,38 @@ export async function saveActivity(db, activity) {
 	if (!clean) throw new Error("La actividad no se puede guardar: sus datos no son válidos.");
 	await putRow(db, ACTIVITIES_STORE, clean);
 	return clean;
+}
+
+/**
+ * Publishes one activity: it must pass the strict validation, and publishing it
+ * unpublishes the other published activity of the same game (one per game maximum).
+ */
+export async function publishActivity(db, id) {
+	const activity = await getActivity(db, id);
+	if (!activity) throw new Error("La actividad no existe.");
+	const sameGame = await listActivities(db, { type: activity.type });
+	const validation = validateActivity(activity, {
+		publishedOfType: sameGame.filter((candidate) => candidate.id !== id),
+	});
+	if (!validation.ok) return { ok: false, errors: validation.errors };
+	const now = new Date().toISOString();
+	for (const other of sameGame) {
+		if (other.id !== id && other.status === ACTIVITY_STATUS.PUBLISHED) {
+			await putRow(db, ACTIVITIES_STORE, { ...other, status: ACTIVITY_STATUS.DRAFT, publishedAt: "", updatedAt: now });
+		}
+	}
+	const published = { ...activity, status: ACTIVITY_STATUS.PUBLISHED, publishedAt: now, updatedAt: now };
+	await putRow(db, ACTIVITIES_STORE, published);
+	return { ok: true, activity: published };
+}
+
+/** Unpublishing keeps the content: it only stops being the game the public plays. */
+export async function unpublishActivity(db, id) {
+	const activity = await getActivity(db, id);
+	if (!activity) throw new Error("La actividad no existe.");
+	const unpublished = { ...activity, status: ACTIVITY_STATUS.DRAFT, publishedAt: "", updatedAt: new Date().toISOString() };
+	await putRow(db, ACTIVITIES_STORE, unpublished);
+	return unpublished;
 }
 
 // ------------------------------------------------------------------- examples

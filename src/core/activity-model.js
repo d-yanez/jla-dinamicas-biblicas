@@ -300,8 +300,14 @@ export function refreshDerivedState(activity) {
 	});
 	const validWords = words.filter((word) => typeof word.normalized === "string");
 	const game = { ...activity.game, words };
-	game.variants = (game.variants ?? []).filter((variant) => variantCoversWordsSafe(variant, validWords));
-	if (!game.variants.some((variant) => variant.id === game.approvedVariantId)) game.approvedVariantId = "";
+	// Editing a word must not destroy a grid that someone already approved and may want
+	// back: keep every variant that still verifies and withdraw only the approval. A typo
+	// fixed restores coverage, and the moderator can approve again without regenerating.
+	game.variants = (game.variants ?? []).filter((variant) => verifyVariant(variant).ok);
+	const approvedStillCovers = game.variants.some(
+		(variant) => variant.id === game.approvedVariantId && variantCoversWordsSafe(variant, validWords),
+	);
+	if (!approvedStillCovers) game.approvedVariantId = "";
 	return refreshTestedState({ ...activity, game });
 }
 

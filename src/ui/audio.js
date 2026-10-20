@@ -1,0 +1,152 @@
+// WebAudio engine: bell, tick and the tension layer, synthesized.
+//
+// No files and no CDN: every sound is an oscillator with an envelope, so the app stays
+// weightless and works offline from the first use. The context is created on the first
+// user gesture, because browsers refuse to start audio before one.
+
+import { DEFAULT_VOLUME, normalizeVolume } from "../core/audio-plan.js";
+
+export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {}) {
+	let context;
+	let master;
+	let tension;
+	let tensionGain;
+	let currentVolume = normalizeVolume(volume);
+	let mutedNow = muted === true;
+
+	function ensure() {
+		if (typeof window === "undefined") return undefined;
+		if (!context) {
+			const AudioContextClass = window.AudioContext ?? window.webkitAudioContext;
+			if (typeof AudioContextClass !== "function") return undefined;
+			try {
+				context = new AudioContextClass();
+				master = context.createGain();
+				master.gain.value = mutedNow ? 0 : currentVolume;
+				master.connect(context.destination);
+			} catch {
+				context = undefined;
+				return undefined;
+			}
+		}
+		if (context.state === "suspended") void context.resume();
+		return context;
+	}
+
+	function tone({ frequency, type = "sine", duration, gain, detune = 0, startAt = 0 }) {
+		const ctx = ensure();
+		if (!ctx || !master) return;
+		const at = ctx.currentTime + startAt;
+		const oscillator = ctx.createOscillator();
+		const envelope = ctx.createGain();
+		oscillator.type = type;
+		oscillator.frequency.value = frequency;
+		oscillator.detune.value = detune;
+		envelope.gain.setValueAtTime(0.0001, at);
+		envelope.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), at + 0.012);
+		envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+		oscillator.connect(envelope);
+		envelope.connect(master);
+		oscillator.start(at);
+		oscillator.stop(at + duration + 0.05);
+	}
+
+	function bell(kind = "start") {
+		const base = kind === "end" ? 392 : 523.25;
+		tone({ frequency: base, duration: 1.1, gain: 0.5 });
+		tone({ frequency: base * 2.76, duration: 0.7, gain: 0.18 });
+		tone({ frequency: base / 2, duration: 1.4, gain: 0.3 });
+	}
+
+	function tick(intensity = 0) {
+		const level = Math.min(4, Math.max(0, Number(intensity) || 0));
+		tone({ frequency: 1180 + level * 90, type: "triangle", duration: 0.07, gain: 0.1 + level * 0.05 });
+	}
+
+	function startTension() {
+		const ctx = ensure();
+		if (!ctx || !master || tension) return;
+		tension = ctx.createOscillator();
+		tensionGain = ctx.createGain();
+		const filter = ctx.createBiquadFilter();
+		tension.type = "sawtooth";
+		tension.frequency.value = 55;
+		filter.type = "lowpass";
+		filter.frequency.value = 240;
+		tensionGain.gain.value = 0.0001;
+		tension.connect(filter);
+		filter.connect(tensionGain);
+		tensionGain.connect(master);
+		tension.start();
+	}
+
+	/** 0..1: louder and brighter as the round runs out. */
+	function setTension(level) {
+		if (!tension || !tensionGain || !context) return;
+		const target = Math.min(1, Math.max(0, Number(level) || 0));
+		const at = context.currentTime;
+		tensionGain.gain.cancelScheduledValues(at);
+		tensionGain.gain.setTargetAtTime(target === 0 ? 0.0001 : 0.02 + target * 0.06, at, 0.12);
+		tension.frequency.setTargetAtTime(55 + target * 25, at, 0.2);
+	}
+
+	function stopTension() {
+		if (!tension) return;
+		try {
+			tension.stop();
+		} catch {
+			/* already stopped */
+		}
+		tension.disconnect?.();
+		tensionGain?.disconnect?.();
+		tension = undefined;
+		tensionGain = undefined;
+	}
+
+	function setVolume(next) {
+		currentVolume = normalizeVolume(next);
+		if (master && context) master.gain.setTargetAtTime(mutedNow ? 0 : currentVolume, context.currentTime, 0.05);
+		return currentVolume;
+	}
+
+	function setMuted(next) {
+		mutedNow = next === true;
+		if (master && context) master.gain.setTargetAtTime(mutedNow ? 0 : currentVolume, context.currentTime, 0.05);
+		return mutedNow;
+	}
+
+	function play(plan) {
+		for (const item of plan ?? []) {
+			if (item.sound === "bell") bell(item.kind);
+			else if (item.sound === "tick") tick(item.intensity);
+		}
+	}
+
+	function dispose() {
+		stopTension();
+		if (context) {
+			try {
+				void context.close();
+			} catch {
+				/* already closed */
+			}
+		}
+		context = undefined;
+		master = undefined;
+	}
+
+	return {
+		unlock: ensure,
+		play,
+		bell,
+		tick,
+		startTension,
+		setTension,
+		stopTension,
+		setVolume,
+		setMuted,
+		isMuted: () => mutedNow,
+		volume: () => currentVolume,
+		dispose,
+	};
+}

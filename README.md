@@ -6,7 +6,7 @@ Sin backend, sin cuentas, sin servicios de pago y sin dependencias en tiempo de 
 
 **Publicada en:** <https://d-yanez.github.io/jla-dinamicas-biblicas/>
 
-> **Estado: fases 1, 2 y 3 de 10 terminadas y verificadas.** Portada, panel con PIN, modelo de actividades con borradores, motor de sopa de letras 20×20 y motor de palabras desordenadas con anagramas validados, pistas y desempates. Faltan los juegos en pantalla, los temporizadores, la impresión, la biblioteca y los respaldos (ver [Roadmap](#roadmap)).
+> **Estado: fases 1 a 4 de 10 terminadas y verificadas.** Portada, panel con PIN, modelo de actividades con borradores, motor de sopa de letras 20×20 y motor de palabras desordenadas con anagramas validados, pistas y desempates. Faltan los juegos en pantalla, los temporizadores, la impresión, la biblioteca y los respaldos (ver [Roadmap](#roadmap)).
 
 ![Portada](docs/capturas/portada.png)
 
@@ -40,10 +40,10 @@ Funciona igual publicado en una subruta porque:
 ## Verificar antes de usar
 
 ```bash
-# 106 pruebas unitarias de la lógica pura (Node 22+, sin dependencias)
+# 157 pruebas unitarias de la lógica pura (Node 22+, sin dependencias)
 node --test tests/*.test.mjs
 
-# 28 verificaciones funcionales en un navegador real (Playwright, opcional)
+# 45 verificaciones funcionales en un navegador real (Playwright, opcional)
 node tests/browser-smoke.mjs
 ```
 
@@ -114,6 +114,8 @@ src/
     letters.js                  alfabeto A-Z y normalización de palabras
     random.js                   PRNG determinista por semilla
     sopa.js                     motor 20×20: ubicar, verificar, variantes
+    rounds.js                   motor de rondas: etapas, reloj, revisión, extra de 60 s
+    audio-plan.js               qué suena ante cada evento y cuánta tensión
     anagram.js                  multiconjunto de letras y generación de anagramas
     instructions.js             plantillas de instrucciones con la duración interpolada
     ids.js                      identificadores
@@ -124,6 +126,8 @@ src/
     activity-editor.js          campos comunes y verificación de requisitos (compartido)
     sopa-admin.js               sección de sopa: palabras y variantes
     palabras-admin.js           sección de palabras: solución, anagrama, pistas y desempates
+    play.js                     pantalla de juego: rondas, reloj, revisión y cierre
+    audio.js                    sonidos sintetizados con WebAudio
     grid.js                     cuadrícula 20×20 con solución coloreada
   styles/
     tokens.css                  paleta JLA, tamaño, alto contraste
@@ -162,7 +166,7 @@ docs/capturas/                  capturas usadas en este README
 | 1 | Estructura, portada, responsive, persistencia y acceso PIN | ✅ terminada |
 | 2 | Modelo de actividades, borradores y motor de sopa de letras 20×20 | ✅ terminada |
 | 3 | Motor de palabras desordenadas (anagramas, pistas, desempates) | ✅ terminada |
-| 4 | Presentación, temporizadores, sonido, atajos, extra de 60 s | pendiente |
+| 4 | Presentación, temporizadores, sonido, atajos, extra de 60 s | ✅ terminada |
 | 5 | Ensayos, guardado y recuperación de sesión | pendiente |
 | 6 | Impresión y PDF carta (participantes y moderador) | pendiente |
 | 7 | Biblioteca, publicación, papelera y respaldos JSON | pendiente |
@@ -174,9 +178,9 @@ La especificación completa está en `JLA_Dinamicas_Biblicas_Roadmap_y_Prompt_Ma
 
 ## Limitaciones conocidas de esta versión
 
-- No hay pantalla de juego: la partida, los temporizadores y la revisión llegan en la fase 4. El motor de sopa ya produce y verifica cuadrículas.
+- La sesión no sobrevive a una recarga: guardar y recuperar la partida interrumpida es la fase 5, junto con el modo ensayo.
 - La pantalla de juego de palabras desordenadas, sus temporizadores y los desempates en vivo llegan en la fase 4; el motor y la validación ya están.
-- No hay publicación, biblioteca con búsqueda, papelera ni respaldo JSON: fase 7. El panel ya verifica los requisitos y avisa qué falta.
+- La publicación existe en su forma mínima (una actividad por juego). Biblioteca con búsqueda, filtros, papelera y respaldo JSON: fase 7.
 - No hay impresión ni PDF: fase 6.
 - No hay service worker: la aplicación necesita conexión en la primera carga y en cada recarga mientras no exista la fase 9.
 - El PIN no resiste a alguien con acceso al navegador (ver arriba).

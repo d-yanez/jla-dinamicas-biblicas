@@ -48,6 +48,24 @@ Estado: **Fase 1** en implementación. Los `S#` citan el documento maestro textu
 - **S32.** "Preparar **3 palabras de desempate** (una principal y dos reservas), con respuesta y anagrama válidos; requisito para publicar."
 - **S33.** "Dos actividades completas de ejemplo, una por juego, sobre ayuno y oración, editables, disponibles para ensayo, **no publicadas automáticamente**." (la de este juego se siembra en esta fase, cuando ya existe su validador)
 
+### Fase 4 — Presentación y temporizadores
+
+- **S34.** Roadmap, fase 4 — criterio de salida: "10 rondas por juego, control manual, sonidos, atajos, extra de 60 segundos".
+- **S35.** "Introducción muestra cuadrícula sin resolver, nombre/tema e instrucciones; reloj detenido."
+- **S36.** "Primera ronda comienza con botón **Mostrar palabra**; ocultar la cuadrícula y proyectar **solo palabra objetivo**, cronómetro grande y **historial de palabras anteriores**."
+- **S37.** "**Siguiente palabra** avanza y arranca el cronómetro inmediatamente con una sola acción; jamás avanzar automáticamente al llegar a cero. Al llegar a `00:00` detener. Pausar/reanudar, reiniciar tiempo de la ronda, avanzar y retroceder; al retroceder restaurar estado previo con cronómetro pausado. Evitar dobles avances por clic/tecla repetidos."
+- **S38.** "Tras ronda 10, moderador inicia manualmente **60 segundos extra**."
+- **S39.** "Revisión manual: confirmar antes de mostrar respuestas al público, revelar una ubicación/solución por acción, colores distinguibles que persisten en la cuadrícula hasta completar las diez."
+- **S40.** "Proyectar solamente palabra desordenada actual, reloj y pistas ya mostradas; **no mostrar historial** de palabras anteriores."
+- **S41.** "Pausar/reanudar, reiniciar tiempo preservando pistas, volver a ronda anterior preservando pistas y con reloj pausado, revelar pista 1/2 manualmente."
+- **S42.** "Empates: palabra extra **sin cronómetro**, primero en levantar mano y responder correctamente; respuesta revelada manualmente."
+- **S43.** "Sonido activado por defecto al **30 %**; volumen ajustable, silencio, campana inicial, tic en últimos cinco segundos, campana final." + capa de tensión sintetizada (L23).
+- **S44.** "Atajos fijos en ambos juegos: `Espacio` pausar/reanudar, `→` avanzar, `←` retroceder, `R` reiniciar reloj, `F` pantalla completa, `M` activar/silenciar, `?` ayuda. En Juego 2, `1` y `2` muestran pistas."
+- **S45.** "Pausa de presentación: sustituir temporalmente contenido público por pantalla neutral JLA, pausar reloj, preservar todo, restaurar contenido al volver y reanudar reloj solo manualmente."
+- **S46.** "Reflexión bíblica final opcional, en **pantalla separada** activada manualmente después de revisión... Después, pantalla **Gracias por participar**, **Volver al inicio** y **Jugar nuevamente**."
+- **S47.** "Finalizar anticipadamente o mostrar soluciones públicas requiere confirmación. Avance de ronda y pistas son inmediatos, con protección anti doble acción."
+- **S48.** "Ayuda `?` en juegos reales y ensayos, específica por juego; al abrir, pausar el cronómetro y al cerrar permanecer pausado."
+
 ## Tasks
 
 | ID | Spec | Tarea | Ruta | Commit |
@@ -77,6 +95,15 @@ Estado: **Fase 1** en implementación. Los `S#` citan el documento maestro textu
 | T23 | S30 | Editor de palabras desordenadas: solución, anagrama regenerable, pistas y desempates | inline | pendiente |
 | T24 | S29 | Verificación: unitarios + smoke extendido a fase 3 | inline | pendiente |
 | T25 | S13 | Commit, push y verificación del sitio publicado | inline | pendiente |
+| T26 | — | Publicación mínima (una por juego) para que exista contenido jugable | inline | pendiente |
+| T27 | S35-S38, S41 | Motor de rondas puro: etapas, reloj, pausa, reinicio, avanzar/retroceder, doble acción, extra de 60 s | inline | pendiente |
+| T28 | S39, S42 | Revisión secuencial con retroceso sin borrar revelados, y desempate sin cronómetro | inline | pendiente |
+| T29 | S43 | Audio sintetizado: campana, tic con intensidad, campana final y tensión | inline | pendiente |
+| T30 | S36, S40 | Pantalla de juego: intro, ronda, historial (sopa), pistas y descubrimientos (palabras) | inline | pendiente |
+| T31 | S44, S47, S48 | Atajos, anti doble acción, ayuda que pausa y confirmaciones | inline | pendiente |
+| T32 | S45, S46 | Pausa de presentación, reflexión y pantalla de gracias | inline | pendiente |
+| T33 | S34 | Verificación: unitarios del motor + sesión completa en navegador | inline | pendiente |
+| T34 | S13 | Commit, push y verificación del sitio publicado | inline | pendiente |
 
 Evidencia de cierre de fase 1: `node --test tests/*.test.mjs` → 48/48; `node tests/browser-smoke.mjs` → 15/15 verificaciones en Chromium, 3 corridas consecutivas verdes; verificación independiente (`gentle-ai-verify`) sin defectos restantes; capturas reales en `docs/capturas/`.
 
@@ -323,3 +350,17 @@ Evidencia: `node --test tests/*.test.mjs` → 132/132 (7 pruebas nuevas en `test
 Decisión: la acción es explícita y sin confirmación, porque el usuario la pide con un clic y el resultado se revierte regenerando de nuevo; no se destruye nada irrecuperable.
 
 Evidencia: 132/132 unitarias; `node tests/browser-smoke.mjs` → 37/37 (nueva verificación: elegir Fácil, regenerar todo, exigir trece anagramas válidos y que el primero conserve la primera letra anclada).
+
+**L26** — Decisiones de arranque de la fase 4.
+
+1. **Dependencia que el roadmap no resuelve: sin publicación no hay nada que jugar.** La fase 7 trae la biblioteca completa (buscar, filtrar, papelera, respaldos), pero la pantalla de juego necesita una actividad publicada. Se adelanta **solo la publicación mínima**: publicar una actividad de un juego despublica la otra del mismo juego (la regla ya existe en la validación), y se puede despublicar. Buscar, filtrar, papelera y respaldos siguen en la fase 7.
+2. **El motor de rondas es puro y con reloj inyectado**: sin DOM, sin `setInterval` propio. La UI lo alimenta con `tick(deltaMs)` y él devuelve eventos (`round-start`, `tick`, `time-up`). Así se prueban cero segundos, doble acción, retroceso y extra de 60 s sin esperar en tiempo real.
+3. **El audio se decide en un plan puro** (`audio-plan.js`: qué suena ante qué evento y con qué intensidad) y se ejecuta en un módulo WebAudio delgado. El comportamiento audible se puede testear sin tarjeta de sonido.
+4. **La capa de tensión es continua, no un evento**: sube en los últimos 10 s y se corta al pausar. Vive en la UI, alimentada por el tiempo restante.
+5. **Un solo componente de juego** para los dos juegos, con diferencias por tipo: historial y cuadrícula en sopa, pistas y descubrimientos en palabras.
+
+**L27** — La guarda anti doble acción tenía un defecto: `resume()` también marcaba el instante del último avance, así que un «Siguiente» inmediatamente después de reanudar quedaba bloqueado. Corregido: la guarda (300 ms) protege **avances** (empezar, siguiente, extra, revelar) y no reanudaciones. El smoke ahora espacia sus clics como una persona; la app no se ralentizó para complacer al test.
+
+**L28** — El smoke destapó un problema de **pérdida de datos**: al editar una palabra se descartaban las variantes, así que corregir un error de tipeo y volver atrás dejaba la actividad sin cuadrícula aprobada y sin forma de recuperarla salvo regenerar. Contradice el principio del documento («priorizar la preservación de datos»). Corregido: al cambiar palabras se **conservan** las variantes que siguen verificando y solo se **retira la aprobación** cuando la cuadrícula ya no cubre las palabras. Un ida y vuelta de la palabra devuelve la misma cuadrícula (mismo id) y basta aprobarla otra vez. El aviso pasó de «las variantes se descartaron» a «la aprobación se retiró porque la cuadrícula ya no coincide».
+
+Evidencia de fase 4: `node --test tests/*.test.mjs` → 157/157 (19 del motor de rondas, 4 del plan de audio, más las de preservación); `node tests/browser-smoke.mjs` → 45/45, con una sesión completa: publicar, jugar con pistas y descubrimientos, pausa, siguiente, retroceder, extra de 60 s, revisión secuencial con retroceso, reflexión y gracias, y la sopa con historial y cuadrícula coloreada.

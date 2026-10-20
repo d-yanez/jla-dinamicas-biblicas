@@ -135,8 +135,8 @@ test("cambiar las palabras invalida las variantes y la aprobada", () => {
 		game: { ...activity.game, words: wordsOf([...WORDS.slice(0, 9), "Obediencia"]) },
 	};
 	const refreshed = refreshDerivedState(changed);
-	assert.deepEqual(refreshed.game.variants, []);
-	assert.equal(refreshed.game.approvedVariantId, "");
+	assert.equal(refreshed.game.variants.length, 1, "la cuadrícula se conserva: no se destruye trabajo aprobado");
+	assert.equal(refreshed.game.approvedVariantId, "", "pero la aprobación se retira porque ya no cubre las palabras");
 	assert.equal(refreshed.game.words[9].normalized, "OBEDIENCIA");
 });
 
@@ -196,4 +196,18 @@ test("wordsSignature cambia con el contenido y no con el orden de las palabras",
 	const reordered = [...words].reverse();
 	assert.equal(wordsSignature(reordered), wordsSignature(words));
 	assert.notEqual(wordsSignature(wordsOf([...WORDS.slice(0, 9), "Otra"])), wordsSignature(words));
+});
+
+test("corregir la palabra devuelve la cuadrícula aprobada sin regenerar", () => {
+	const activity = sopaDraft();
+	const changed = {
+		...activity,
+		game: { ...activity.game, words: wordsOf([...WORDS.slice(0, 9), "Obediencia"]) },
+	};
+	const stale = refreshDerivedState(changed);
+	assert.equal(stale.game.approvedVariantId, "", "mientras no coincide, no hay aprobación");
+	const reverted = refreshDerivedState({ ...stale, game: { ...stale.game, words: activity.game.words } });
+	assert.equal(reverted.game.variants.length, 1, "la variante sigue ahí");
+	assert.equal(reverted.game.words[9].normalized, "PERSEVERANCIA");
+	assert.equal(reverted.game.variants[0].id, activity.game.variants[0].id, "es la misma cuadrícula, no una nueva");
 });
