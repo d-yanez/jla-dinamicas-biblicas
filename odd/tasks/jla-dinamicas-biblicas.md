@@ -40,6 +40,14 @@ Estado: **Fase 1** en implementación. Los `S#` citan el documento maestro textu
 - **S27.** "Una actividad publicada por juego como máximo."
 - **S28.** "Dos actividades completas de ejemplo, una por juego, sobre ayuno y oración, editables, disponibles para ensayo, **no publicadas automáticamente**."
 
+### Fase 3 — Motor de palabras desordenadas
+
+- **S29.** Roadmap, fase 3 — criterio de salida: "10 soluciones y anagramas validados, dos pistas opcionales, 3 desempates".
+- **S30.** "**10 palabras** con solución editable, anagrama editable o regenerable, **hasta dos pistas opcionales** por palabra; orden manual."
+- **S31.** "Verificar que solución y anagrama contengan exactamente el mismo multiconjunto de letras, normalizando acentos y mayúsculas según reglas documentadas; no aceptar letras faltantes o extras."
+- **S32.** "Preparar **3 palabras de desempate** (una principal y dos reservas), con respuesta y anagrama válidos; requisito para publicar."
+- **S33.** "Dos actividades completas de ejemplo, una por juego, sobre ayuno y oración, editables, disponibles para ensayo, **no publicadas automáticamente**." (la de este juego se siembra en esta fase, cuando ya existe su validador)
+
 ## Tasks
 
 | ID | Spec | Tarea | Ruta | Commit |
@@ -62,6 +70,13 @@ Estado: **Fase 1** en implementación. Los `S#` citan el documento maestro textu
 | T16 | S19, S23, S24 | Editor de sopa: campos, orden manual de palabras, autoguardado e indicador, vista previa de variantes | inline | pendiente |
 | T17 | S16 | Verificación: unitarios + smoke de navegador extendido a fase 2 | inline | pendiente |
 | T18 | S13 | Commit, push y verificación del sitio publicado | inline | pendiente |
+| T19 | S31 | Núcleo de anagramas: normalización documentada, multiconjunto y generación determinista, con tests | inline | pendiente |
+| T20 | S30, S32 | Modelo de palabras desordenadas: palabras con pistas y tres desempates, con tests | inline | pendiente |
+| T21 | S29, S33 | Validación estricta y ejemplo de ayuno y oración sin publicar, con tests | inline | pendiente |
+| T22 | S30 | Extraer la sesión de borrador y los campos comunes para no duplicar el editor | inline | pendiente |
+| T23 | S30 | Editor de palabras desordenadas: solución, anagrama regenerable, pistas y desempates | inline | pendiente |
+| T24 | S29 | Verificación: unitarios + smoke extendido a fase 3 | inline | pendiente |
+| T25 | S13 | Commit, push y verificación del sitio publicado | inline | pendiente |
 
 Evidencia de cierre de fase 1: `node --test tests/*.test.mjs` → 48/48; `node tests/browser-smoke.mjs` → 15/15 verificaciones en Chromium, 3 corridas consecutivas verdes; verificación independiente (`gentle-ai-verify`) sin defectos restantes; capturas reales en `docs/capturas/`.
 
@@ -190,3 +205,25 @@ Corrección: el smoke verifica solo el estado **estable** (las variantes se desc
 Lección: un test que compite con el debounce de la aplicación es flaky por diseño. Se verifica el resultado, no el parpadeo intermedio.
 
 Verificación: 23/23 local y 23/23 contra `https://d-yanez.github.io/jla-dinamicas-biblicas/`.
+
+**L15** — Decisiones técnicas de fase 3 (ambigüedades resueltas sin consultar):
+
+1. **Una sola regla de normalización para los dos juegos**: mayúsculas, sin acentos, `Ñ→N`, solo `A–Z`, largo 2–20. Vale para la sopa (ubicar) y para las palabras desordenadas (comparar multiconjuntos). Documentada en `letters.js` y usada por ambos motores.
+2. **El anagrama se guarda y se muestra normalizado** (mayúsculas, sin acentos). Mostrar `ORACIÓN` mezclada con tildes filtraría la posición del acento y regalaría parte de la respuesta.
+3. **El anagrama no puede ser igual a la solución** y la generación prefiere permutaciones con dos o más posiciones cambiadas; acepta una sola si no hay mejor. Si la palabra no admite ninguna permutación distinta (todas las letras iguales), el motor devuelve un error concreto en vez de un anagrama trivial.
+4. **Las pistas son texto libre opcional**: máximo dos por palabra, recortadas, hasta 140 caracteres. No participan de la validación de multiconjunto.
+5. **Tres desempates exactos**, rotulados Principal, Reserva 1 y Reserva 2, con la misma validación que las palabras y sin pistas.
+6. **Orden de ronda relevante en este juego**: a diferencia de la sopa (donde reordenar no cambia la cuadrícula), en palabras desordenadas el orden define la secuencia jugada, así que cuenta como contenido relevante e invalida el «probado».
+7. **La siembra ahora incluye los dos ejemplos**: la de palabras desordenadas se agrega recién ahora, cuando existe su validador (era la decisión pendiente de L11.5).
+8. **Extracción previa a escribir el segundo editor**: la sesión de borrador (autoguardado, indicador, lista, apertura, duplicado, limpieza de requisitos) y los campos comunes se extraen a módulos compartidos. Copiar 600 líneas del editor de sopa habría duplicado el lugar donde viven los bugs de guardado.
+
+**L16** — Fase 3 cerrada. Entregado: motor de anagramas (normalización compartida con la sopa, multiconjunto de letras, generación determinista por semilla con preferencia por mover al menos dos letras y error explícito cuando no existe anagrama distinto), modelo de palabras desordenadas con solución/anagrama/hasta dos pistas/orden manual, tres desempates rotulados, validación estricta con mensajes por campo, y el ejemplo de ayuno y oración **sin publicar** con nueve pistas y tres desempates válidos.
+
+**Refactor previo obligatorio**: se extrajeron `draft-session.js` (autoguardado, indicador, lista, apertura, duplicado, limpieza de requisitos, selección por juego) y `activity-editor.js` (campos comunes, plantilla de instrucciones, verificación de requisitos). El editor de sopa se reescribió como sección delgada y el de palabras desordenadas se escribió una sola vez. Copiar el editor habría duplicado justo los lugares donde viven los bugs de guardado.
+
+Defectos encontrados durante la fase (todos corregidos):
+1. **Regresión del refactor detectada por el smoke**: `renderVariants` cortaba con `isConnected`, pero al montar la sección la caja todavía no estaba adjunta, así que la cuadrícula no se dibujaba (0 celdas). Se quitó el guard: renderizar en un nodo desconectado es inocuo.
+2. **Colisión de prefijos en los selectores del test**: `Solución del desempate 1` y `Anagrama del desempate 1` también empezaban con `Solución `/`Anagrama `, y `Regenerar anagrama 1` matcheaba `…10`. Se rotularon los desempates como «Respuesta» (la palabra del documento) y se usaron patrones exactos.
+3. **Dato de test incorrecto**: `OOICARN` tiene el mismo multiconjunto que `ORACION` (la O se repite), así que era un anagrama válido y no un caso de letra extra. Corregido a `OOICARNO`.
+
+Evidencia: `node --test tests/*.test.mjs` → 106/106 (18 pruebas nuevas de anagramas y modelo de palabras); `node tests/browser-smoke.mjs` → 28/28 (5 verificaciones nuevas de fase 3).

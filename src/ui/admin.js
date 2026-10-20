@@ -5,6 +5,7 @@
 import { ADMIN_SECTIONS, SECTION_LABELS } from "../core/router.js";
 import { el } from "./dom.js";
 import { renderSecurityGroup } from "./security.js";
+import { mountPalabrasSection } from "./palabras-admin.js";
 import { mountSopaSection } from "./sopa-admin.js";
 
 function renderNav(section) {
@@ -129,6 +130,8 @@ export function renderAdmin({ section, prefs, publishedCount = 0, downloaded = f
 		content = [renderAppearanceGroup({ prefs, onChange: actions.changePrefs }), renderSecurityGroup({ downloaded, actions }), renderDataGroup()];
 	} else if (section === "sopa" && db) {
 		content = [mountSopaSection({ db }).element];
+	} else if (section === "palabras" && db) {
+		content = [mountPalabrasSection({ db }).element];
 	} else {
 		content = [renderGameSection(section, publishedCount)];
 	}

@@ -874,3 +874,62 @@ html[data-contrast="alto"] .sopa-grid__cell--solved {
 		display: none;
 	}
 }
+
+/* --------------------------------------- palabras desordenadas (editor, fase 3) */
+
+.word-row--palabras {
+	grid-template-columns: 5.5rem minmax(0, 1fr) minmax(0, 1fr) auto;
+	align-items: start;
+}
+
+.word-row__status {
+	font-size: 0.78rem;
+	font-weight: 650;
+	color: var(--success);
+	background: rgba(31, 94, 69, 0.12);
+	border: 1px solid rgba(31, 94, 69, 0.35);
+	border-radius: 999px;
+	padding: 0.2rem 0.6rem;
+	max-width: 16rem;
+}
+
+.word-row__status--error {
+	color: var(--danger);
+	background: var(--danger-surface);
+	border-color: var(--danger);
+}
+
+.hint-list {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: center;
+	margin-top: 0.3rem;
+}
+
+.hint-row {
+	display: flex;
+	gap: 0.4rem;
+	align-items: center;
+	flex: 1 1 18rem;
+	min-width: 0;
+}
+
+.hint-row__index {
+	font-size: 0.78rem;
+	font-weight: 650;
+	color: var(--on-surface-muted);
+	white-space: nowrap;
+}
+
+@media (max-width: 40rem) {
+	.word-row--palabras {
+		grid-template-columns: 4.5rem minmax(0, 1fr);
+	}
+
+	.word-row__status,
+	.word-row--palabras .word-row__actions {
+		grid-column: 1 / -1;
+	}
+}

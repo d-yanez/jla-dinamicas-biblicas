@@ -330,6 +330,53 @@ try {
 		assert.equal(await page.locator(".sopa-grid__cell").count(), 400);
 	});
 
+	await step("el ejemplo de palabras desordenadas aparece como borrador con desempates", async () => {
+		await page.getByRole("link", { name: "Palabras desordenadas", exact: true }).click();
+		const row = page.locator(".activity-row").filter({ hasText: "Palabras desordenadas: Ayuno y oración" });
+		await row.waitFor();
+		const text = await row.textContent();
+		assert.match(text, /Borrador/u);
+		assert.match(text, /10 palabras/u);
+		assert.match(text, /3 desempates/u);
+	});
+
+	await step("el editor muestra soluciones, anagramas, pistas y desempates válidos", async () => {
+		await page.getByRole("button", { name: "Abrir" }).first().click();
+		await page.getByRole("heading", { name: "Palabras desordenadas: Ayuno y oración" }).waitFor();
+		assert.equal(await page.getByLabel(/^Solución \d+$/u).count(), 10);
+		assert.equal(await page.getByLabel(/^Anagrama \d+$/u).count(), 10);
+		assert.equal(await page.getByLabel(/^Respuesta del desempate \d+$/u).count(), 3);
+		assert.ok((await page.getByLabel(/^Pista \d+ de la palabra \d+$/u).count()) >= 2, "el ejemplo trae pistas");
+		assert.equal(await page.locator('.word-row__status[data-ok="true"]').count(), 13, "diez palabras y tres desempates válidos");
+	});
+
+	await step("un anagrama con letras de más se marca y se regenera", async () => {
+		await page.locator('input[aria-label="Anagrama 1"]').fill("ORACIONX");
+		await page.locator('.word-row__status[data-ok="false"]').first().waitFor();
+		assert.match(await page.locator(".word-row__status--error").first().textContent(), /mismas letras/u);
+		await page.getByRole("button", { name: "Regenerar anagrama 1", exact: true }).click();
+		await page.locator('.word-row__status[data-ok="false"]').first().waitFor({ state: "detached" });
+		assert.equal(await page.locator('.word-row__status[data-ok="true"]').count(), 13);
+	});
+
+	await step("los requisitos de palabras desordenadas se verifican", async () => {
+		await page.getByRole("button", { name: "Verificar requisitos" }).click();
+		await page.getByText("La actividad cumple todos los requisitos", { exact: false }).waitFor();
+	});
+
+	await step("el borrador de palabras desordenadas persiste tras recargar", async () => {
+		await page.locator('input[aria-label="Pista 1 de la palabra 3"]').fill("Pista editada en la prueba");
+		await page.getByText(/^Guardado/u).waitFor({ timeout: 5000 });
+		await page.reload();
+		await page.getByRole("heading", { name: "Panel de administración" }).waitFor();
+		await page.locator('input[inputmode="numeric"]').first().fill("5678");
+		await page.getByRole("button", { name: "Entrar" }).click();
+		await page.getByRole("link", { name: "Palabras desordenadas", exact: true }).click();
+		await page.getByRole("button", { name: "Abrir" }).first().click();
+		await page.getByRole("heading", { name: "Palabras desordenadas: Ayuno y oración" }).waitFor();
+		assert.equal(await page.locator('input[aria-label="Pista 1 de la palabra 3"]').inputValue(), "Pista editada en la prueba");
+	});
+
 	await step("en móvil no hay desborde horizontal y las tarjetas se apilan", async () => {
 		const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
 		const mobilePage = await mobileContext.newPage();

@@ -6,7 +6,7 @@ Sin backend, sin cuentas, sin servicios de pago y sin dependencias en tiempo de 
 
 **Publicada en:** <https://d-yanez.github.io/jla-dinamicas-biblicas/>
 
-> **Estado: fases 1 y 2 de 10 terminadas y verificadas.** Portada, panel de administración con PIN, modelo de actividades con borradores y motor de sopa de letras 20×20 funcionando. Faltan los juegos en pantalla, los temporizadores, la impresión, la biblioteca y los respaldos (ver [Roadmap](#roadmap)).
+> **Estado: fases 1, 2 y 3 de 10 terminadas y verificadas.** Portada, panel con PIN, modelo de actividades con borradores, motor de sopa de letras 20×20 y motor de palabras desordenadas con anagramas validados, pistas y desempates. Faltan los juegos en pantalla, los temporizadores, la impresión, la biblioteca y los respaldos (ver [Roadmap](#roadmap)).
 
 ![Portada](docs/capturas/portada.png)
 
@@ -40,10 +40,10 @@ Funciona igual publicado en una subruta porque:
 ## Verificar antes de usar
 
 ```bash
-# 84 pruebas unitarias de la lógica pura (Node 22+, sin dependencias)
+# 106 pruebas unitarias de la lógica pura (Node 22+, sin dependencias)
 node --test tests/*.test.mjs
 
-# 22 verificaciones funcionales en un navegador real (Playwright, opcional)
+# 28 verificaciones funcionales en un navegador real (Playwright, opcional)
 node tests/browser-smoke.mjs
 ```
 
@@ -55,7 +55,7 @@ Para validar el sitio ya publicado, apuntalo a la URL real:
 JLA_BASE_URL=https://d-yanez.github.io/jla-dinamicas-biblicas/ node tests/browser-smoke.mjs
 ```
 
-Qué cubre la verificación de navegador: portada y tarjetas, `Jugar` sin actividad publicada, creación y confirmación del PIN, descarga y formato del archivo de recuperación, preferencias de tamaño y contraste, persistencia tras recarga, PIN incorrecto, cierre de sesión, importación del archivo de recuperación con PIN nuevo, rechazo de un archivo de otro dispositivo, ausencia de desborde horizontal en móvil, y en fase 2: el ejemplo de sopa como borrador, el editor con diez palabras y 400 celdas, la solución coloreada con su tabla de coordenadas, la verificación de requisitos, el descarte de variantes al cambiar una palabra, la generación de tres variantes con aprobación de una, y la persistencia del borrador tras recargar.
+Qué cubre la verificación de navegador: portada y tarjetas, `Jugar` sin actividad publicada, creación y confirmación del PIN, descarga y formato del archivo de recuperación, preferencias de tamaño y contraste, persistencia tras recarga, PIN incorrecto, cierre de sesión, importación del archivo de recuperación con PIN nuevo, rechazo de un archivo de otro dispositivo, ausencia de desborde horizontal en móvil, en fase 2: el ejemplo de sopa como borrador, el editor con diez palabras y 400 celdas, la solución coloreada con su tabla de coordenadas, la verificación de requisitos, el descarte de variantes al cambiar una palabra, la generación de tres variantes con aprobación de una, y la persistencia del borrador tras recargar; y en fase 3: el ejemplo de palabras desordenadas como borrador con tres desempates, diez soluciones y anagramas válidos, el rechazo de un anagrama con letras de más, la regeneración, la verificación de requisitos y la persistencia de las pistas tras recargar.
 
 ## Motor de sopa de letras (fase 2)
 
@@ -75,6 +75,16 @@ El PIN de cuatro dígitos evita que alguien que toma el dispositivo entre al pan
 - Al crearlo se ofrece un **archivo de recuperación**. Es propio de cada dispositivo y sirve para definir un PIN nuevo sin tocar las actividades.
 - El PIN y su archivo de recuperación **quedan fuera de todos los respaldos JSON**, por diseño.
 - Si se pierden el PIN y el archivo: las actividades siguen guardadas en el navegador, pero el panel queda inaccesible. Es la razón por la que el panel insiste en descargar el archivo.
+
+## Motor de palabras desordenadas (fase 3)
+
+![Editor de palabras desordenadas](docs/capturas/palabras-editor.png)
+
+- **Diez palabras** con solución editable, anagrama editable o regenerable y **hasta dos pistas opcionales** por palabra. El orden de la lista es el orden de las rondas.
+- **Multiconjunto de letras**: solución y anagrama deben tener exactamente las mismas letras, ni una más ni una menos, con la misma normalización que la sopa (mayúsculas, sin acentos, `A–Z`). El estado de cada fila se actualiza mientras se escribe: «Válido» o el motivo exacto.
+- **El anagrama no puede ser igual a la solución**. La generación prefiere mover al menos dos letras y avisa cuando una palabra no admite un anagrama distinto, en vez de entregar uno trivial.
+- **Tres palabras de desempate** (Principal, Reserva 1 y Reserva 2) con respuesta y anagrama válidos: requisito para publicar, igual que las diez palabras.
+- **El anagrama se guarda y se muestra sin acentos**: mezclar `ORACIÓN` con sus tildes filtraría dónde va el acento.
 
 ## Los datos
 
@@ -104,12 +114,16 @@ src/
     letters.js                  alfabeto A-Z y normalización de palabras
     random.js                   PRNG determinista por semilla
     sopa.js                     motor 20×20: ubicar, verificar, variantes
+    anagram.js                  multiconjunto de letras y generación de anagramas
     instructions.js             plantillas de instrucciones con la duración interpolada
     ids.js                      identificadores
   ui/                           DOM puro; sin acceso a almacenamiento
     dom.js  icons.js  fields.js  download.js  common.js  format.js
     home.js  game.js  gate.js  admin.js  security.js
-    sopa-admin.js               editor de sopa: campos, palabras, variantes
+    draft-session.js            autoguardado, lista, apertura y duplicado (compartido)
+    activity-editor.js          campos comunes y verificación de requisitos (compartido)
+    sopa-admin.js               sección de sopa: palabras y variantes
+    palabras-admin.js           sección de palabras: solución, anagrama, pistas y desempates
     grid.js                     cuadrícula 20×20 con solución coloreada
   styles/
     tokens.css                  paleta JLA, tamaño, alto contraste
@@ -147,7 +161,7 @@ docs/capturas/                  capturas usadas en este README
 |---|---|---|
 | 1 | Estructura, portada, responsive, persistencia y acceso PIN | ✅ terminada |
 | 2 | Modelo de actividades, borradores y motor de sopa de letras 20×20 | ✅ terminada |
-| 3 | Motor de palabras desordenadas (anagramas, pistas, desempates) | pendiente |
+| 3 | Motor de palabras desordenadas (anagramas, pistas, desempates) | ✅ terminada |
 | 4 | Presentación, temporizadores, sonido, atajos, extra de 60 s | pendiente |
 | 5 | Ensayos, guardado y recuperación de sesión | pendiente |
 | 6 | Impresión y PDF carta (participantes y moderador) | pendiente |
@@ -161,7 +175,7 @@ La especificación completa está en `JLA_Dinamicas_Biblicas_Roadmap_y_Prompt_Ma
 ## Limitaciones conocidas de esta versión
 
 - No hay pantalla de juego: la partida, los temporizadores y la revisión llegan en la fase 4. El motor de sopa ya produce y verifica cuadrículas.
-- Las palabras desordenadas están en el panel como sección, pero su motor y su validador de anagramas llegan en la fase 3. La actividad de ejemplo de ese juego también: sembrarla antes sería sembrar datos sin verificar.
+- La pantalla de juego de palabras desordenadas, sus temporizadores y los desempates en vivo llegan en la fase 4; el motor y la validación ya están.
 - No hay publicación, biblioteca con búsqueda, papelera ni respaldo JSON: fase 7. El panel ya verifica los requisitos y avisa qué falta.
 - No hay impresión ni PDF: fase 6.
 - No hay service worker: la aplicación necesita conexión en la primera carga y en cada recarga mientras no exista la fase 9.
