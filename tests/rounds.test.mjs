@@ -229,3 +229,70 @@ test("el snapshot es una copia y no deja mutar la sesión", () => {
 	assert.equal(play.snapshot().roundIndex, 0);
 	assert.deepEqual(play.snapshot().history, [0]);
 });
+
+test("el desempate se abre solo desde la revisión y sin cronómetro", () => {
+	const play = session(30);
+	assert.deepEqual(play.startTiebreak(1_000), [], "no se puede abrir antes de revisar");
+	play.start(0);
+	play.beginReview();
+	const events = play.startTiebreak(2_000);
+	assert.equal(events.length, 1);
+	const state = play.snapshot();
+	assert.equal(state.stage, PLAY_STAGE.TIEBREAKER);
+	assert.equal(state.tiebreak.index, 0);
+	assert.equal(state.tiebreak.anagramShown, false);
+	assert.equal(state.tiebreak.answerShown, false);
+	assert.equal(state.running, false, "sin cronómetro");
+	assert.equal(state.tiebreakCount, 3);
+});
+
+test("el anagrama y la respuesta del desempate se revelan a mano", () => {
+	const play = session(30);
+	play.start(0);
+	play.beginReview();
+	play.startTiebreak(1_000);
+	assert.deepEqual(play.showTiebreakAnagram(), []);
+	assert.equal(play.snapshot().tiebreak.anagramShown, true);
+	assert.equal(play.snapshot().tiebreak.answerShown, false, "mostrar la palabra no revela la respuesta");
+	const reveal = play.revealTiebreakAnswer();
+	assert.equal(reveal[0].kind, "tiebreak-answer");
+	assert.equal(play.snapshot().tiebreak.answerShown, true);
+});
+
+test("hay tres desempates y cada uno reinicia sus revelaciones", () => {
+	const play = session(10);
+	play.start(0);
+	play.beginReview();
+	play.startTiebreak(1_000);
+	play.showTiebreakAnagram();
+	play.revealTiebreakAnswer();
+	play.nextTiebreak(2_000);
+	const second = play.snapshot().tiebreak;
+	assert.equal(second.index, 1);
+	assert.equal(second.anagramShown, false);
+	assert.equal(second.answerShown, false);
+	play.nextTiebreak(3_000);
+	play.nextTiebreak(4_000);
+	assert.equal(play.snapshot().tiebreak.index, 2, "no hay cuarto desempate");
+});
+
+test("volver del desempate devuelve la revisión", () => {
+	const play = session(10);
+	play.start(0);
+	play.beginReview();
+	play.startTiebreak(1_000);
+	assert.deepEqual(play.closeTiebreak(), []);
+	assert.equal(play.snapshot().stage, PLAY_STAGE.REVIEW);
+	assert.equal(play.snapshot().review.cursor, 0, "la revisión conserva su avance");
+});
+
+test("el cambio de desempate respeta la guarda anti doble acción", () => {
+	const play = session(10);
+	play.start(0);
+	play.beginReview();
+	play.startTiebreak(1_000);
+	play.nextTiebreak(1_050);
+	assert.equal(play.snapshot().tiebreak.index, 0, "dos avances seguidos cuentan como uno");
+	play.nextTiebreak(2_000);
+	assert.equal(play.snapshot().tiebreak.index, 1);
+});

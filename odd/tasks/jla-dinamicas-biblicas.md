@@ -429,3 +429,14 @@ Evidencia: `node --test tests/*.test.mjs` → 168/168 (11 pruebas de respaldo); 
 Detalle de verificación: el 404 de un archivo opcional queda registrado como error de consola y el smoke exige consola limpia. Por eso se commitea una **semilla vacía válida** en lugar de no tener archivo: el pedido devuelve 200, no inserta nada y los ejemplos siguen apareciendo.
 
 Evidencia: `node --test tests/*.test.mjs` → 174/174 (6 de la semilla); `node tests/browser-smoke.mjs` → 49/49.
+
+**L35** — Dos pedidos del usuario probando palabras desordenadas.
+
+1. **«Falta la música de fondo durante el juego»**: la música estaba implementada pero con un defecto real de secuenciador. El contexto de audio arranca suspendido hasta el primer gesto; cuando se reanudaba, el planificador intentaba alcanzar todos los pulsos perdidos y disparaba una ráfaga. Ahora, si el reloj de audio quedó atrás, se salta al presente (`nextTime = currentTime + 0.05`) en vez de acumular, y el bucle de pregunta subió de ganancia (0.13 → 0.17). El interruptor está en Administración → Sonido → «Música mientras responden».
+2. **«Cuando termine, que muestre la palabra, no al final»**: en palabras desordenadas, al llegar a `00:00` la **respuesta de esa palabra aparece en la misma ronda**, debajo del anagrama. No hay que esperar la revisión final: el flujo real del grupo es palabra por ronda y el primero que la acierta suma un punto. La revisión sigue disponible (lista las diez) y el desempate también, pero ya no son obligatorios para saber qué palabra era.
+
+Verificado en un navegador real con una ronda de 10 segundos: a los 10 s aparece «Respuesta: Oración» con el reloj en `00:00`.
+
+También quedó cerrado el **desempate en vivo** (era el hueco de §6 en la fase 4): nueva etapa `TIEBREAKER` en el motor con cinco pruebas (se abre solo desde la revisión, sin cronómetro, anagrama primero y respuesta revelada a mano, tres palabras, retroceso y guarda anti doble acción) y su pantalla con «Mostrar palabra», «Revelar respuesta», anterior/siguiente y vuelta a la revisión.
+
+Evidencia: 179/179 unitarias; 50/50 de navegador en local.

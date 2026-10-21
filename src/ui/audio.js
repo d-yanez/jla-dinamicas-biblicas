@@ -76,7 +76,7 @@ export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {
 
 	const MUSIC = {
 		lobby: { bpm: 84, gain: 0.1, steps: [0, 4, 7, 4, 9, 7, 4, 2], bass: [0, 0, 5, 5] },
-		question: { bpm: 126, gain: 0.13, steps: [0, 4, 7, 9, 7, 4, 0, 4], bass: [0, 0, 5, 7] },
+		question: { bpm: 126, gain: 0.17, steps: [0, 4, 7, 9, 7, 4, 0, 4], bass: [0, 0, 5, 7] },
 	};
 	let music;
 
@@ -86,6 +86,9 @@ export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {
 		if (!music || !context) return;
 		const { pattern } = music;
 		const stepSeconds = 60 / pattern.bpm / 2;
+		// The context starts suspended until the first gesture: without this the scheduler
+		// would try to catch up on every missed beat and fire a burst of notes.
+		if (music.nextTime < context.currentTime - 0.05) music.nextTime = context.currentTime + 0.05;
 		while (music.nextTime < context.currentTime + 0.4) {
 			const step = music.step % pattern.steps.length;
 			tone({

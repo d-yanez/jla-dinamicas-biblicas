@@ -15,6 +15,7 @@ export const PLAY_STAGE = Object.freeze({
 	ROUND: "round",
 	EXTRA: "extra",
 	REVIEW: "review",
+	TIEBREAKER: "tiebreaker",
 	REFLECTION: "reflection",
 	THANKS: "thanks",
 });
@@ -29,7 +30,7 @@ export const PLAY_EVENT = Object.freeze({
 
 const TICK_FROM_SECONDS = 5;
 
-export function createRoundSession({ roundSeconds, extraSeconds = EXTRA_SECONDS, reviewCount = ROUND_COUNT } = {}) {
+export function createRoundSession({ roundSeconds, extraSeconds = EXTRA_SECONDS, reviewCount = ROUND_COUNT, tiebreakCount = 3 } = {}) {
 	const durationMs = Math.max(1, Math.round(Number(roundSeconds) || 30)) * 1000;
 	const extraMs = Math.max(1, Math.round(Number(extraSeconds) || EXTRA_SECONDS)) * 1000;
 
@@ -42,6 +43,7 @@ export function createRoundSession({ roundSeconds, extraSeconds = EXTRA_SECONDS,
 		history: [],
 		hints: {},
 		review: { cursor: 0, watermark: 0 },
+		tiebreak: { index: 0, anagramShown: false, answerShown: false },
 		lastAdvanceAt: Number.NEGATIVE_INFINITY,
 		pausedForHelp: false,
 	};
@@ -90,6 +92,8 @@ export function createRoundSession({ roundSeconds, extraSeconds = EXTRA_SECONDS,
 				hints: { ...state.hints },
 				review: { ...state.review },
 				reviewCount,
+				tiebreak: { ...state.tiebreak },
+				tiebreakCount,
 				pausedForHelp: state.pausedForHelp,
 			};
 		},
@@ -219,6 +223,56 @@ export function createRoundSession({ roundSeconds, extraSeconds = EXTRA_SECONDS,
 			};
 			state.lastAdvanceAt = Number.isFinite(now) ? now : Number.NEGATIVE_INFINITY;
 			return [{ type: PLAY_EVENT.REVEAL, kind: "solution", revealed: state.review.cursor }];
+		},
+
+		/**
+		 * Tiebreakers: no clock at all. The moderator shows the scramble, waits for a hand,
+		 * and reveals the answer by hand — the spec asks for exactly that.
+		 */
+		startTiebreak(now) {
+			if (state.stage !== PLAY_STAGE.REVIEW) return [];
+			if (!canAdvance(now)) return [];
+			state.stage = PLAY_STAGE.TIEBREAKER;
+			state.tiebreak = { index: 0, anagramShown: false, answerShown: false };
+			state.lastAdvanceAt = Number.isFinite(now) ? now : Number.NEGATIVE_INFINITY;
+			return [{ type: PLAY_EVENT.REVEAL, kind: "tiebreak-open", index: 0 }];
+		},
+
+		showTiebreakAnagram() {
+			if (state.stage !== PLAY_STAGE.TIEBREAKER) return [];
+			if (state.tiebreak.anagramShown) return [];
+			state.tiebreak = { ...state.tiebreak, anagramShown: true };
+			return [];
+		},
+
+		revealTiebreakAnswer() {
+			if (state.stage !== PLAY_STAGE.TIEBREAKER) return [];
+			if (state.tiebreak.answerShown) return [];
+			state.tiebreak = { ...state.tiebreak, anagramShown: true, answerShown: true };
+			return [{ type: PLAY_EVENT.REVEAL, kind: "tiebreak-answer" }];
+		},
+
+		nextTiebreak(now) {
+			if (state.stage !== PLAY_STAGE.TIEBREAKER) return [];
+			if (state.tiebreak.index >= tiebreakCount - 1) return [];
+			if (!canAdvance(now)) return [];
+			state.tiebreak = { index: state.tiebreak.index + 1, anagramShown: false, answerShown: false };
+			state.lastAdvanceAt = Number.isFinite(now) ? now : Number.NEGATIVE_INFINITY;
+			return [];
+		},
+
+		previousTiebreak() {
+			if (state.stage !== PLAY_STAGE.TIEBREAKER) return [];
+			if (state.tiebreak.index === 0) return [];
+			state.tiebreak = { index: state.tiebreak.index - 1, anagramShown: false, answerShown: false };
+			return [];
+		},
+
+		closeTiebreak() {
+			if (state.stage !== PLAY_STAGE.TIEBREAKER) return [];
+			state.stage = PLAY_STAGE.REVIEW;
+			state.tiebreak = { index: 0, anagramShown: false, answerShown: false };
+			return [];
 		},
 
 		/** Going back moves the cursor only: colours already shown stay on the grid. */

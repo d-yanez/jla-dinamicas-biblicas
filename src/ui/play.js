@@ -24,7 +24,7 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 	let session = createRoundSession({ roundSeconds: activity.roundSeconds });
 	const words = activity.game.words ?? [];
 	const variant = (activity.game.variants ?? []).find((candidate) => candidate.id === activity.game.approvedVariantId);
-	const state = { pauseOverlay: false, discoveries: {}, countdown: 0, closingPlayed: false };
+	const state = { pauseOverlay: false, discoveries: {}, countdown: 0, closingPlayed: false, answerFor: -1 };
 
 	let clockNode;
 	let timer;
@@ -53,6 +53,7 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 	}
 
 	function run(action) {
+		state.answerFor = -1;
 		const events = action() ?? [];
 		applyEvents(events);
 		render();
@@ -81,6 +82,13 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 			const events = session.tick(delta);
 			if (events.length > 0) {
 				applyEvents(events);
+				// When the word's time is over the answer appears right there: the group has to
+				// know what the word was, without waiting for a final review.
+				if (game === "palabras" && events.some((event) => event.type === PLAY_EVENT.TIME_UP)) {
+					state.answerFor = session.snapshot().roundIndex;
+					render();
+					return;
+				}
 			}
 			updateClock();
 		}, CLOCK_INTERVAL_MS);
@@ -116,6 +124,15 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 			);
 		}
 		if (current.stage === PLAY_STAGE.REVIEW) {
+			if (game === "palabras") {
+				buttons.push(
+					el(
+						"button",
+						{ class: "btn btn--primary", type: "button", onclick: () => run(() => session.startTiebreak(nowMs())) },
+						"Desempate",
+					),
+				);
+			}
 			buttons.push(
 				el("button", { class: "btn btn--primary", type: "button", onclick: () => run(() => session.revealNext(nowMs())) }, "Revelar siguiente →"),
 				el("button", { class: "btn btn--ghost", type: "button", onclick: () => run(() => session.revealPrevious()) }, "← Retroceder"),
@@ -415,6 +432,9 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 			{ class: "play-stage" },
 			el("p", { class: "play-eyebrow" }, `Ronda ${current.roundNumber} de ${current.roundCount}${current.stage === PLAY_STAGE.EXTRA ? " · tiempo extra" : ""}`),
 			el("h1", { class: "play-target", style: `--letters: ${Math.max(4, target.length || 4)}` }, target || "—"),
+			game === "palabras" && state.answerFor === current.roundIndex
+				? el("p", { class: "play-answer", role: "status" }, `Respuesta: ${word?.solution ?? "—"}`)
+				: undefined,
 			clockBlock(current),
 		);
 
@@ -555,6 +575,61 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 		);
 	}
 
+	const TIEBREAK_LABELS = ["Principal", "Reserva 1", "Reserva 2"];
+
+	/** No clock: the moderator shows the scramble and reveals the answer by hand. */
+	function renderTiebreak(current) {
+		const tiebreakers = activity.game.tiebreakers ?? [];
+		const entry = tiebreakers[current.tiebreak.index];
+		const label = TIEBREAK_LABELS[current.tiebreak.index] ?? `Reserva ${current.tiebreak.index}`;
+		const anagram = entry?.anagram ?? "";
+		return el(
+			"section",
+			{ class: "play-stage play-stage--center" },
+			el("p", { class: "play-eyebrow" }, `Desempate ${current.tiebreak.index + 1} de ${current.tiebreakCount} · ${label}`),
+			current.tiebreak.anagramShown
+				? el("h1", { class: "play-target", style: `--letters: ${Math.max(4, anagram.length || 4)}` }, anagram || "—")
+				: el("p", { class: "play-tiebreak-hidden" }, "Palabra oculta"),
+			current.tiebreak.answerShown ? el("p", { class: "play-answer" }, `Respuesta: ${entry?.solution ?? "—"}`) : undefined,
+			el(
+				"div",
+				{ class: "play-controls" },
+				el(
+					"button",
+					{ class: "btn btn--primary", type: "button", disabled: current.tiebreak.anagramShown, onclick: () => run(() => session.showTiebreakAnagram()) },
+					"Mostrar palabra",
+				),
+				el(
+					"button",
+					{
+						class: "btn",
+						type: "button",
+						disabled: !current.tiebreak.anagramShown || current.tiebreak.answerShown,
+						onclick: () => run(() => session.revealTiebreakAnswer()),
+					},
+					"Revelar respuesta",
+				),
+				el(
+					"button",
+					{ class: "btn btn--ghost", type: "button", disabled: current.tiebreak.index === 0, onclick: () => run(() => session.previousTiebreak()) },
+					"← Anterior",
+				),
+				el(
+					"button",
+					{
+						class: "btn btn--ghost",
+						type: "button",
+						disabled: current.tiebreak.index >= current.tiebreakCount - 1,
+						onclick: () => run(() => session.nextTiebreak(nowMs())),
+					},
+					"Siguiente desempate →",
+				),
+				el("button", { class: "btn btn--ghost", type: "button", onclick: () => run(() => session.closeTiebreak()) }, "Volver a la revisión"),
+			),
+			el("p", { class: "field__hint" }, "Sin cronómetro: gana la primera pareja que levante la mano y responda bien; si falla, sigue otra."),
+		);
+	}
+
 	function renderReflection() {
 		return el(
 			"section",
@@ -593,6 +668,7 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 		state.pauseOverlay = false;
 		state.countdown = 0;
 		state.closingPlayed = false;
+		state.answerFor = -1;
 		render();
 	}
 
@@ -667,6 +743,7 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 		if (current.stage === PLAY_STAGE.INTRO) root.append(renderIntro());
 		else if (current.stage === PLAY_STAGE.ROUND || current.stage === PLAY_STAGE.EXTRA) root.append(renderRound(current));
 		else if (current.stage === PLAY_STAGE.REVIEW) root.append(renderReview(current));
+		else if (current.stage === PLAY_STAGE.TIEBREAKER) root.append(renderTiebreak(current));
 		else if (current.stage === PLAY_STAGE.REFLECTION) root.append(renderReflection());
 		else root.append(renderThanks());
 		syncMusic(current);

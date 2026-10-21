@@ -689,6 +689,25 @@ try {
 		assert.equal(await page.locator(".review-item").count(), 2, "lo ya revelado sigue a la vista");
 	});
 
+	await step("el desempate se juega sin cronómetro y revela a mano", async () => {
+		// Opening a tiebreaker is an advance: respect the 300 ms double-action guard.
+		await settle();
+		await page.getByRole("button", { name: "Desempate", exact: true }).click();
+		await page.getByText(/^Desempate 1 de 3 · Principal/u).waitFor();
+		await page.locator(".play-tiebreak-hidden").waitFor();
+		assert.equal(await page.locator(".play-clock").count(), 0, "sin cronómetro");
+		await page.getByRole("button", { name: "Mostrar palabra", exact: true }).click();
+		await page.locator(".play-target").first().waitFor();
+		assert.equal(await page.locator(".play-answer").count(), 0, "mostrar la palabra no revela la respuesta");
+		await page.getByRole("button", { name: "Revelar respuesta", exact: true }).click();
+		await page.locator(".play-answer").waitFor();
+		await settle();
+		await page.getByRole("button", { name: "Siguiente desempate →", exact: true }).click();
+		await page.getByText(/^Desempate 2 de 3 · Reserva 1/u).waitFor();
+		await page.getByRole("button", { name: "Volver a la revisión", exact: true }).click();
+		await page.getByText(/^Reveladas \d+ de 10/u).waitFor();
+	});
+
 	await step("el cierre pasa por la reflexión y la pantalla de gracias", async () => {
 		await page.getByRole("button", { name: "Cerrar la actividad" }).click();
 		await page.getByRole("heading", { name: /Jesús invita a ayunar/u }).waitFor();

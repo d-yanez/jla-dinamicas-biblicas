@@ -1314,3 +1314,27 @@ html[data-mode="play"] {
 	min-height: calc(100dvh - 2 * var(--space-5));
 	justify-content: center;
 }
+
+/* --------------------------------------------------- desempate en vivo (fase 4) */
+
+.play-tiebreak-hidden {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: clamp(1.6rem, 1.2rem + 2vw, 3rem);
+	letter-spacing: 0.2em;
+	color: var(--on-surface-muted);
+	border: 2px dashed var(--border-strong);
+	border-radius: var(--radius-md);
+	padding: var(--space-3) var(--space-5);
+}
+
+.play-answer {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: clamp(1.6rem, 1.2rem + 2.4vw, 3.4rem);
+	color: var(--surface-brand);
+	border-left: 6px solid var(--accent);
+	padding-left: var(--space-3);
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+}
