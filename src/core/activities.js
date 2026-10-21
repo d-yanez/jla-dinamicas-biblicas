@@ -143,9 +143,9 @@ export async function unpublishActivity(db, id) {
 // -------------------------------------------------------------------- backup
 
 /** Everything needed to move the work to another device. The PIN is never included. */
-export async function exportBackup(db, prefs) {
+export async function exportBackup(db, prefs, appVersion) {
 	const activities = await listActivities(db);
-	return buildBackup({ activities, prefs });
+	return buildBackup({ activities, prefs, appVersion });
 }
 
 /**

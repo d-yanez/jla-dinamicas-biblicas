@@ -1,6 +1,7 @@
 // Shared chrome: header, footer, the discreet admin gear, dialogs and notices.
 
 import { el, uniqueId } from "./dom.js";
+import { formatVersion } from "../core/version.js";
 import { renderIcon } from "./icons.js";
 
 export function renderHeader() {
@@ -22,7 +23,8 @@ export function renderHeader() {
 	);
 }
 
-export function renderFooter() {
+export function renderFooter(version = "") {
+	const label = formatVersion(version);
 	return el(
 		"footer",
 		{ class: "site-footer" },
@@ -30,7 +32,7 @@ export function renderFooter() {
 			"div",
 			{ class: "site-footer__inner" },
 			el("p", {}, "JLA · Dinámicas Bíblicas"),
-			el("p", {}, "Los datos se guardan solo en este dispositivo."),
+			el("p", {}, [label ? `${label} · ` : "", "Los datos se guardan solo en este dispositivo."].join("")),
 		),
 	);
 }

@@ -115,6 +115,7 @@ try {
 		assert.equal(await page.getByRole("link", { name: "Jugar" }).count(), 2);
 		assert.equal(await page.getByText("Sin actividad publicada").count(), 2);
 		assert.equal(await page.getByRole("link", { name: "Administrar" }).isVisible(), true);
+		assert.match(await page.locator(".site-footer").textContent(), /v\d+\.\d+\.\d+/u, "el pie muestra la versión desplegada");
 	});
 
 	await step("Jugar sin actividad publicada informa y ofrece volver al inicio", async () => {
@@ -678,6 +679,14 @@ try {
 		const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("jla.prefs") ?? "null"));
 		assert.equal(stored?.soundTicks, false, "el interruptor de tic queda guardado");
 		await page.getByRole("button", { name: "Reanudar", exact: true }).click();
+	});
+
+	await step("al acertar se pausa y se muestra la respuesta sin esperar el cero", async () => {
+		await page.getByRole("button", { name: "Acertaron: mostrar respuesta", exact: true }).click();
+		await page.locator(".play-answer").waitFor({ timeout: 3000 });
+		assert.match(await page.locator(".play-answer").textContent(), /^Respuesta: /u);
+		await page.getByRole("button", { name: "Reanudar", exact: true }).waitFor();
+		assert.equal(await page.locator(".play-clock").textContent(), "00:30", "el reloj queda detenido donde estaba");
 	});
 
 	await step("el extra de 60 segundos se inicia a mano tras la décima ronda", async () => {

@@ -111,6 +111,15 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 				el("button", { class: "btn btn--ghost", type: "button", onclick: () => run(() => session.previous()) }, "← Retroceder"),
 				el("button", { class: "btn btn--ghost", type: "button", onclick: () => run(() => session.restart()) }, "Reiniciar reloj (R)"),
 			);
+			if (game === "palabras" && state.answerFor !== current.roundIndex) {
+				buttons.push(
+					el(
+						"button",
+						{ class: "btn btn--primary", type: "button", onclick: () => revealCurrentAnswer() },
+						"Acertaron: mostrar respuesta",
+					),
+				);
+			}
 			if (current.roundIndex === current.roundCount - 1) {
 				buttons.push(
 					el("button", { class: "btn btn--ghost", type: "button", onclick: () => run(() => session.startExtra(nowMs())) }, "60 segundos extra"),
@@ -328,6 +337,19 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 		else if (lower === "f") void toggleFullscreen();
 		else if (lower === "m") setMuted(!audio.isMuted());
 		else if ((key === "1" || key === "2") && game === "palabras") showHint(Number(key) - 1);
+	}
+
+	/**
+	 * Someone in the group got the word: the clock pauses and the answer appears right
+	 * away, without waiting for 00:00. The next word clears it.
+	 */
+	function revealCurrentAnswer() {
+		const current = snapshot();
+		if (state.answerFor === current.roundIndex) return;
+		void session.pause();
+		state.answerFor = current.roundIndex;
+		audio.stopMusic();
+		render();
 	}
 
 	function showHint(index) {

@@ -21,8 +21,8 @@ const NO_ACTIVITIES = "El respaldo no tiene actividades.";
 const TOO_BIG = "El archivo es demasiado grande para ser un respaldo de JLA.";
 
 /** The file to download: activities plus the non-sensitive settings. */
-export function buildBackup({ activities = [], prefs, exportedAt = new Date().toISOString() } = {}) {
-	return {
+export function buildBackup({ activities = [], prefs, appVersion, exportedAt = new Date().toISOString() } = {}) {
+	const backup = {
 		kind: BACKUP_KIND,
 		version: BACKUP_VERSION,
 		app: "JLA Dinámicas Bíblicas",
@@ -30,6 +30,8 @@ export function buildBackup({ activities = [], prefs, exportedAt = new Date().to
 		settings: normalizePrefs(prefs),
 		activities: activities.map((activity) => ({ ...activity })),
 	};
+	if (typeof appVersion === "string" && appVersion.length > 0) backup.appVersion = appVersion;
+	return backup;
 }
 
 export function parseBackup(text) {
@@ -107,5 +109,12 @@ export function previewBackup(text) {
 			: { name: typeof raw?.name === "string" && raw.name.length > 0 ? raw.name : "Entrada inválida", type: typeof raw?.type === "string" ? raw.type : "?", status: "?", valid: false };
 	});
 	const invalid = items.filter((item) => !item.valid).length;
-	return { ok: true, exportedAt: typeof parsed.backup.exportedAt === "string" ? parsed.backup.exportedAt : "", items, valid: items.length - invalid, invalid };
+	return {
+		ok: true,
+		exportedAt: typeof parsed.backup.exportedAt === "string" ? parsed.backup.exportedAt : "",
+		appVersion: typeof parsed.backup.appVersion === "string" ? parsed.backup.appVersion : "",
+		items,
+		valid: items.length - invalid,
+		invalid,
+	};
 }

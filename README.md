@@ -108,6 +108,20 @@ Reglas del mecanismo:
 
 El script solo valida: una línea de comandos no puede escribir el IndexedDB del navegador, así que la importación real ocurre en la app.
 
+## Cómo se juega una ronda
+
+1. **Administrar** → publicá una actividad → portada → **Jugar**.
+2. Introducción con música de espera → **Mostrar palabra** → cuenta regresiva **3 · 2 · 1**.
+3. Corre el reloj con música de fondo y la palabra (o el anagrama) en pantalla.
+4. En palabras desordenadas: **Pista 1 / 2** y **Descubrir una letra** a demanda. Cuando alguien la acierta, **«Acertaron: mostrar respuesta»** pausa el reloj y muestra la solución. Al llegar a `00:00` la respuesta aparece sola.
+5. Tras la décima ronda: **60 segundos extra** (manual) → **Revisar soluciones** de a una → **Desempate** (sin cronómetro, con revelado a mano) → reflexión → **Gracias por participar**.
+
+La versión abierta se muestra en el pie y en Administración. Para saber qué hay publicado:
+
+```bash
+node scripts/check-deployed.mjs
+```
+
 ## Los datos
 
 Todo se guarda en **IndexedDB** (`jla-dinamicas`), con esquema versionado y migraciones incrementales.

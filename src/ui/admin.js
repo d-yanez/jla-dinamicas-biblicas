@@ -10,6 +10,7 @@ import { confirmDialog, createDialog } from "./common.js";
 import { readFileText } from "./download.js";
 import { formatDateTime } from "./format.js";
 import { previewBackup } from "../core/backup.js";
+import { formatVersion, isNewerVersion } from "../core/version.js";
 import { mountPalabrasSection } from "./palabras-admin.js";
 import { mountSopaSection } from "./sopa-admin.js";
 
@@ -191,7 +192,7 @@ function renderSoundGroup({ prefs, onChange }) {
 	);
 }
 
-function renderDataGroup({ actions }) {
+function renderDataGroup({ actions, version }) {
 	const status = el("p", { class: "field__hint", role: "status" }, "");
 	const fileInput = el("input", { class: "input", type: "file", accept: ".json,application/json", "aria-label": "Archivo de respaldo" });
 	const importButton = el(
@@ -239,6 +240,13 @@ function renderDataGroup({ actions }) {
 							),
 						),
 					),
+					preview.appVersion && version && isNewerVersion(preview.appVersion, version)
+						? el(
+								"p",
+								{ class: "notice notice--warn" },
+								`El archivo viene de una versión más nueva (${formatVersion(preview.appVersion)}). Actualizá esta app antes de importar.`,
+							)
+						: undefined,
 					preview.invalid > 0
 						? el("p", { class: "notice notice--warn" }, `${preview.invalid} ${preview.invalid === 1 ? "entrada no es válida" : "entradas no son válidas"} y se van a omitir.`)
 						: undefined,
@@ -279,6 +287,7 @@ function renderDataGroup({ actions }) {
 		"section",
 		{ class: "settings-group", "aria-labelledby": "group-data" },
 		el("h2", { class: "settings-group__title", id: "group-data" }, "Datos y respaldo"),
+		el("p", { class: "field__hint" }, `Versión de la aplicación: ${formatVersion(version) || version || "desconocida"}`),
 		el(
 			"p",
 			{ class: "notice notice--warn" },
@@ -310,14 +319,14 @@ function renderDataGroup({ actions }) {
 	);
 }
 
-export function renderAdmin({ section, prefs, publishedCount = 0, downloaded = false, actions, db }) {
+export function renderAdmin({ section, prefs, publishedCount = 0, downloaded = false, actions, db, version = "" }) {
 	let content;
 	if (section === "config") {
 		content = [
 			renderAppearanceGroup({ prefs, onChange: actions.changePrefs }),
 			renderSoundGroup({ prefs, onChange: actions.changePrefs }),
 			renderSecurityGroup({ downloaded, actions }),
-			renderDataGroup({ actions }),
+			renderDataGroup({ actions, version }),
 		];
 	} else if (section === "sopa" && db) {
 		content = [mountSopaSection({ db }).element];

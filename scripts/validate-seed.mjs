@@ -56,4 +56,4 @@ for (const raw of parsed.backup.activities) {
 	console.log(`  - ${raw.name} (${raw.type}, ${raw.status})`);
 }
 for (const [game, count] of publishedPerGame) console.log(`  publicada de ${game}: ${count}`);
-console.log(`Exportada el ${parsed.backup.exportedAt ?? "(sin fecha)"}; se aplica solo a un navegador sin datos.`);
+console.log(`Exportada el ${parsed.backup.exportedAt ?? "(sin fecha)"} con la versión ${parsed.backup.appVersion ?? "(sin versión)"}; se aplica solo a un navegador sin datos.`);

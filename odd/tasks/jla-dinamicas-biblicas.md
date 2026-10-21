@@ -459,3 +459,11 @@ Verificado instrumentando WebAudio en una ronda de 10 s:
 - ronda 2 (00:09): **+7**
 
 Evidencia: 179/179 unitarias; 50/50 de navegador.
+
+**L38** — Versionado visible y revelado manual de la respuesta.
+
+1. **Versionado**: `version.json` en la raíz (`0.6.0`) es la única fuente. La app lo lee al arrancar y lo muestra en el pie y en Administración → Datos y respaldo; viaja en cada respaldo como `appVersion`, y la vista previa de importación **avisa si el archivo viene de una versión más nueva**. Dos comandos: `node scripts/bump-version.mjs [patch|minor|major]` y **`node scripts/check-deployed.mjs`**, que compara el commit publicado en Pages con `HEAD` y falla si no coinciden o si hay cambios sin commitear. Sin build, esa es la única fuente honesta de «qué está publicado».
+2. **Bug encontrado por el smoke al agregar lo anterior**: al reemplazar `APP_VERSION` por `version.json` quedó una referencia a la constante borrada en `buildRecoveryData`, que lanzaba `ReferenceError` **dentro** del manejador de descarga. El diálogo lo atrapaba, así que la descarga del archivo de recuperación dejaba de funcionar sin mensaje visible. Lo detectó el paso que espera el evento `download`; ahora usa `state.version`.
+3. **Revelado manual en palabras**: botón **«Acertaron: mostrar respuesta»** durante la ronda. Pausa el reloj y muestra la solución al instante, sin esperar `00:00` (que sigue mostrándola sola). La palabra siguiente limpia el estado y la música vuelve.
+
+Evidencia: 184/184 unitarias (5 de versiones); 51/51 de navegador, incluido «al acertar se pausa y se muestra la respuesta sin esperar el cero» y la versión en el pie.

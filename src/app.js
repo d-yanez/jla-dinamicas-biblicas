@@ -27,11 +27,12 @@ import { renderPinSetup, renderPinUnlock } from "./ui/gate.js";
 import { renderHome } from "./ui/home.js";
 import { openChangePinDialog, openRecoveryDownloadDialog, startRecoveryImport } from "./ui/security.js";
 
-const APP_VERSION = "0.1.0";
+const VERSION_PATH = "./version.json";
 const SECURITY_KEY = "security";
 
 const state = {
 	db: undefined,
+	version: "",
 	gate: createAdminGate(),
 	prefs: normalizePrefs(),
 	security: undefined,
@@ -47,6 +48,18 @@ let navigationGeneration = 0;
 
 function appRoot() {
 	return document.querySelector("[data-app-root]");
+}
+
+/** The version shown in the footer: read from the deployed file, never invented. */
+async function readAppVersion() {
+	try {
+		const response = await fetch(VERSION_PATH, { cache: "no-store" });
+		if (!response.ok) return "";
+		const value = await response.json();
+		return typeof value?.version === "string" ? value.version : "";
+	} catch {
+		return "";
+	}
 }
 
 function hasPin() {
@@ -115,7 +128,7 @@ function buildRecoveryData() {
 		installationId: identity.installationId,
 		recoveryKey: identity.recoveryKey,
 		createdAt: identity.createdAt,
-		appVersion: APP_VERSION,
+		appVersion: state.version || undefined,
 	});
 }
 
@@ -233,6 +246,7 @@ async function buildAdmin(route) {
 	return renderAdmin({
 		section,
 		db: state.db,
+		version: state.version,
 		prefs: state.prefs,
 		publishedCount,
 		downloaded: recoveryDownloaded(),
@@ -254,7 +268,7 @@ async function buildAdmin(route) {
 			},
 			useRecovery: handleUseRecovery,
 			exportBackup: async () => {
-				const backup = await exportBackup(state.db, state.prefs);
+				const backup = await exportBackup(state.db, state.prefs, state.version);
 				const day = new Date().toISOString().slice(0, 10);
 				downloadJson(`jla-respaldo-${day}.json`, backup);
 			},
@@ -315,7 +329,7 @@ export async function render() {
 	if (token !== renderToken) return;
 	const root = appRoot();
 	if (!root) return;
-	const nodes = [renderHeader(), main, renderFooter()];
+	const nodes = [renderHeader(), main, renderFooter(state.version)];
 	if (route.name !== "admin") nodes.push(renderGear());
 	root.replaceChildren(...nodes);
 	// The play screen hides the site footer and the admin gear: it is the audience view.
@@ -341,6 +355,7 @@ export async function bootstrap() {
 
 	try {
 		state.db = await openDatabase();
+		state.version = await readAppVersion();
 		state.prefs = readStoredPrefs();
 		state.security = await readSetting(state.db, SECURITY_KEY);
 		// The bundled configuration wins for a browser with no data; the demo examples are
