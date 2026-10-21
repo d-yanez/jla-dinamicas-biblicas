@@ -485,3 +485,11 @@ Corrección: cuando la publicación se rechaza, ahora se abre un **diálogo «No
 Otras dos causas posibles que se documentan para el usuario: una pantalla de juego abierta en otra pestaña conserva la actividad que cargó al montarse (hay que recargarla), y la lista puede mostrar la publicada **y** su borrador: lo que se edita es el borrador, publicar reemplaza la publicada.
 
 Evidencia: 184/184 unitarias; 52/52 de navegador, incluida la verificación nueva «publicar con un anagrama inválido explica el problema en un diálogo».
+
+**L41** — Ajuste visual: la palabra proyectada se partía en dos líneas al maximizar (capturas del usuario con «DEPENDENCIA» cortada como `DENEAIECN` / `DP`).
+
+Causa: `overflow-wrap: anywhere` en `.play-target` permitía cortar la palabra, y la fórmula de tamaño no descontaba el ancho real del contenedor en pantallas anchas.
+
+Corrección: `white-space: nowrap` y tamaño derivado de las letras que tienen que entrar (`min(92vw, 68rem) / (letras × 0.78)`), con el avance del monoespaciado (~0.66em por letra) y margen. Nunca se parte y nunca se desborda.
+
+Verificación nueva en el smoke: en plena ronda se cambia el viewport a **1920×1080**, se exige que `.play-target` ocupe **una sola línea** (`getClientRects().length === 1`) y que no desborde (`scrollWidth <= clientWidth`).

@@ -661,6 +661,16 @@ try {
 		await page.getByText(/^Ronda 1 de 10/u).waitFor();
 		await page.locator(".play-clock").waitFor();
 		assert.match(await page.locator(".play-target").textContent(), /^[A-Z]+$/u, "solo la palabra desordenada");
+		// A maximised projector window must still show the word on a single line.
+		await page.setViewportSize({ width: 1920, height: 1080 });
+		await page.waitForTimeout(150);
+		const layout = await page.locator(".play-target").evaluate((node) => ({
+			lines: node.getClientRects().length,
+			overflows: node.scrollWidth > node.clientWidth + 1,
+		}));
+		assert.equal(layout.lines, 1, "la palabra va en una sola línea aunque se maximice");
+		assert.equal(layout.overflows, false, "y no se desborda del contenedor");
+		await page.setViewportSize({ width: 1280, height: 900 });
 		const oscillatorsBefore = await page.evaluate(() => window.__oscillators);
 		await page.waitForTimeout(1200);
 		const oscillatorsAfter = await page.evaluate(() => window.__oscillators);

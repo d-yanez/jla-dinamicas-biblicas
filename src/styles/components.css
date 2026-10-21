@@ -1299,10 +1299,13 @@ html[data-mode="play"] {
 }
 
 .play-target {
-	font-size: clamp(1.8rem, min(9vw, calc(86vw / var(--letters, 8))), 9rem);
-	letter-spacing: 0.08em;
+	/* One line, always: the size is derived from the letters that must fit, and the
+	 * target never wraps. The monospace advance is about 0.66em per letter with the
+	 * spacing below, so 0.78 leaves margin for the widest glyph. */
+	font-size: clamp(1.3rem, calc(min(92vw, 68rem) / (var(--letters, 8) * 0.78)), 9rem);
+	letter-spacing: 0.06em;
+	white-space: nowrap;
 	max-width: 100%;
-	overflow-wrap: anywhere;
 }
 
 .play:fullscreen {
