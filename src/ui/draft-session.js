@@ -5,7 +5,7 @@
 // editors cannot drift apart — least of all in the part that writes data.
 
 import { ACTIVITY_STATUS, validateActivity } from "../core/activity-model.js";
-import { getActivity, listActivities, publishActivity, saveActivity, unpublishActivity } from "../core/activities.js";
+import { ensureEditableDraft, getActivity, listActivities, publishActivity, saveActivity, unpublishActivity } from "../core/activities.js";
 import { createActivity } from "../core/activity-model.js";
 
 const SAVE_DELAY_MS = 800;
@@ -115,10 +115,22 @@ export function createDraftSession({ db, type }) {
 			state.lastSavedAt = activity.updatedAt;
 		},
 		async open(id) {
-			selection.set(type, id);
-			const activity = await getActivity(db, id);
+			const requested = await getActivity(db, id);
+			// Editing a published activity never touches it: a derived draft is opened instead.
+			const activity = requested?.status === ACTIVITY_STATUS.PUBLISHED ? await ensureEditableDraft(db, id) : requested;
 			if (!activity) {
 				await session.refreshList();
+				emit("open");
+				return;
+			}
+			selection.set(type, activity.id);
+			if (activity.id !== id) {
+				state.draft = activity;
+				state.requirements = undefined;
+				state.saveState = "saved";
+				state.lastSavedAt = activity.updatedAt;
+				await session.refreshList();
+				state.notice = "Estás editando un borrador: la actividad publicada no cambia hasta que publiques estos cambios.";
 				emit("open");
 				return;
 			}
@@ -166,6 +178,10 @@ export function createDraftSession({ db, type }) {
 			}
 			state.draft = result.activity;
 			await session.refreshList();
+			// Go back to the list: the published row is never edited in place, and the list is
+			// where the moderator sees what is public.
+			state.draft = undefined;
+			selection.delete(type);
 			emit("open");
 			return result;
 		},

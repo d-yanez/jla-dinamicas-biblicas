@@ -46,6 +46,10 @@ export function renderSopaGrid({ variant, highlights = new Map(), label = "Cuadr
 			);
 			if (highlight !== undefined) {
 				cell.style.setProperty("--cell-color", SOLUTION_COLORS[highlight.order % SOLUTION_COLORS.length]);
+				if (Number.isInteger(highlight.step)) {
+					cell.classList.add("sopa-grid__cell--revealing");
+					cell.style.setProperty("--reveal-delay", `${highlight.step * 70}ms`);
+				}
 				// The placed word, not the visible text: this is what proves the grid was
 				// generated from the current words and not from an older version of them.
 				cell.dataset.word = highlight.word;

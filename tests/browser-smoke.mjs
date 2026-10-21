@@ -582,7 +582,33 @@ try {
 	await step("publicar deja la actividad disponible para jugar", async () => {
 		await page.getByRole("button", { name: "Publicar", exact: true }).click();
 		await page.locator("dialog").getByRole("button", { name: "Publicar", exact: true }).click();
-		await page.getByText("Publicada", { exact: true }).first().waitFor();
+		await page.getByRole("heading", { name: "Actividades de palabras desordenadas" }).waitFor();
+		await page
+			.locator(".activity-row")
+			.filter({ hasText: "Palabras desordenadas: Ayuno y oración" })
+			.filter({ hasText: "Publicada" })
+			.waitFor();
+	});
+
+	await step("editar una publicada abre un borrador y no la modifica", async () => {
+		await page.locator(".activity-row").filter({ hasText: "Publicada" }).getByRole("button", { name: "Abrir" }).click();
+		await page.getByText("Borrador de la publicada", { exact: false }).waitFor();
+		await page.getByLabel("Nombre de la actividad").fill("Nombre editado en borrador");
+		await page.getByText(/^Guardado/u).waitFor({ timeout: 8000 });
+		await page.getByRole("button", { name: "Volver a la lista" }).click();
+		// Returning to the list flushes the draft first, so wait for the list itself.
+		await page.getByRole("heading", { name: "Actividades de palabras desordenadas" }).waitFor();
+		await page.locator(".activity-row").nth(1).waitFor();
+		assert.equal(await page.locator(".activity-row").count(), 2, "conviven la publicada y su borrador");
+		assert.match(
+			await page.locator(".activity-row").filter({ hasText: "Publicada" }).textContent(),
+			/Ayuno y oración/u,
+			"la publicada conserva su contenido",
+		);
+		assert.match(
+			await page.locator(".activity-row").filter({ hasText: "Nombre editado en borrador" }).textContent(),
+			/Borrador/u,
+		);
 	});
 
 	await step("la portada ofrece jugar la actividad publicada", async () => {
@@ -670,7 +696,8 @@ try {
 		await page.getByRole("heading", { name: "Sopa de letras: Ayuno y oración", exact: true }).waitFor();
 		await page.getByRole("button", { name: "Publicar", exact: true }).click();
 		await page.locator("dialog").getByRole("button", { name: "Publicar", exact: true }).click();
-		await page.getByText("Publicada", { exact: true }).first().waitFor();
+		await page.getByRole("heading", { name: "Actividades de sopa de letras" }).waitFor();
+		await page.locator(".activity-row").filter({ hasText: "Publicada" }).waitFor();
 		await page.getByRole("link", { name: /ir al inicio/u }).click();
 		const card = page.locator(".game-card").filter({ hasText: "Sopa de letras" });
 		await card.getByRole("link", { name: "Jugar" }).click();

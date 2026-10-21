@@ -12,7 +12,7 @@ import {
 	refreshDerivedState,
 	validateActivity,
 } from "./activity-model.js";
-import { getAll, getRow, putRow, readSetting, writeSetting } from "./db.js";
+import { getAll, getRow, putRow, readSetting, removeRow, writeSetting } from "./db.js";
 import { createId } from "./ids.js";
 import { defaultInstructionsFor } from "./instructions.js";
 import { generateVariant } from "./sopa.js";
@@ -63,24 +63,68 @@ export async function saveActivity(db, activity) {
 }
 
 /**
+ * The draft that edits a published activity. The published row is never edited directly:
+ * a derived draft is created the first time, and publishing it replaces the published one.
+ */
+export async function ensureEditableDraft(db, id) {
+	const activity = await getActivity(db, id);
+	if (!activity) throw new Error("La actividad no existe.");
+	if (activity.status !== ACTIVITY_STATUS.PUBLISHED) return activity;
+	const sameGame = await listActivities(db, { type: activity.type });
+	const existing = sameGame.find((candidate) => candidate.originId === activity.id);
+	if (existing) return existing;
+	const now = new Date().toISOString();
+	const draft = normalizeActivity({
+		...activity,
+		id: createId(),
+		originId: activity.id,
+		status: ACTIVITY_STATUS.DRAFT,
+		publishedAt: "",
+		testedAt: "",
+		testedSignature: "",
+		createdAt: now,
+		updatedAt: now,
+	});
+	await putRow(db, ACTIVITIES_STORE, draft);
+	return draft;
+}
+
+/**
  * Publishes one activity: it must pass the strict validation, and publishing it
  * unpublishes the other published activity of the same game (one per game maximum).
+ * Publishing a derived draft replaces the published content and keeps its identity.
  */
 export async function publishActivity(db, id) {
 	const activity = await getActivity(db, id);
 	if (!activity) throw new Error("La actividad no existe.");
 	const sameGame = await listActivities(db, { type: activity.type });
+	// The activity this draft replaces is not "another published one": it is the target.
 	const validation = validateActivity(activity, {
-		publishedOfType: sameGame.filter((candidate) => candidate.id !== id),
+		publishedOfType: sameGame.filter((candidate) => candidate.id !== id && candidate.id !== activity.originId),
 	});
 	if (!validation.ok) return { ok: false, errors: validation.errors };
 	const now = new Date().toISOString();
+	const origin = activity.originId ? sameGame.find((candidate) => candidate.id === activity.originId) : undefined;
 	for (const other of sameGame) {
-		if (other.id !== id && other.status === ACTIVITY_STATUS.PUBLISHED) {
+		if (other.id !== id && other.id !== activity.originId && other.status === ACTIVITY_STATUS.PUBLISHED) {
 			await putRow(db, ACTIVITIES_STORE, { ...other, status: ACTIVITY_STATUS.DRAFT, publishedAt: "", updatedAt: now });
 		}
 	}
-	const published = { ...activity, status: ACTIVITY_STATUS.PUBLISHED, publishedAt: now, updatedAt: now };
+	if (origin) {
+		const replaced = {
+			...activity,
+			id: origin.id,
+			originId: "",
+			createdAt: origin.createdAt,
+			status: ACTIVITY_STATUS.PUBLISHED,
+			publishedAt: now,
+			updatedAt: now,
+		};
+		await putRow(db, ACTIVITIES_STORE, replaced);
+		await removeRow(db, ACTIVITIES_STORE, activity.id);
+		return { ok: true, activity: replaced, replaced: origin.id };
+	}
+	const published = { ...activity, originId: "", status: ACTIVITY_STATUS.PUBLISHED, publishedAt: now, updatedAt: now };
 	await putRow(db, ACTIVITIES_STORE, published);
 	return { ok: true, activity: published };
 }

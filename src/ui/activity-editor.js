@@ -224,7 +224,7 @@ export function mountActivityEditor({ db, type, renderGame }) {
 						el(
 							"p",
 							{ class: "hero__eyebrow" },
-							`${statusLabel(draft)} · ${copy.label}`,
+							`${statusLabel(draft)}${draft.originId ? " de la publicada" : ""} · ${copy.label}`,
 							draft.status === ACTIVITY_STATUS.PUBLISHED ? el("span", { class: "badge badge--gold", style: "margin-left:.5rem" }, "Publicada") : undefined,
 						),
 						nodes.title,

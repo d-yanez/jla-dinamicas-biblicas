@@ -58,6 +58,8 @@ export function createActivity({ type = ACTIVITY_TYPE.SOPA, name = "" } = {}) {
 		// Set only on the activities the app ships with, so seeding can tell an example
 		// from a copy or from the moderator's own work.
 		exampleKey: "",
+		// Set on a draft that edits a published activity: publishing it replaces that one.
+		originId: "",
 		type,
 		status: ACTIVITY_STATUS.DRAFT,
 		name,
@@ -243,6 +245,7 @@ export function normalizeActivity(value) {
 	const activity = { ...base };
 	if (typeof value.id === "string" && value.id.length > 0) activity.id = value.id;
 	if (typeof value.exampleKey === "string" && value.exampleKey.length > 0) activity.exampleKey = value.exampleKey;
+	if (typeof value.originId === "string" && value.originId.length > 0) activity.originId = value.originId;
 	for (const field of TEXT_FIELDS) {
 		if (typeof value[field] === "string") activity[field] = value[field];
 	}
@@ -340,6 +343,7 @@ export function duplicateAsDraft(activity) {
 		...source,
 		id: createId(),
 		exampleKey: "",
+		originId: "",
 		status: ACTIVITY_STATUS.DRAFT,
 		name: `${source.name} (copia)`,
 		testedAt: "",

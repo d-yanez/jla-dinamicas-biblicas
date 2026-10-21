@@ -1229,3 +1229,34 @@ html[data-contrast="alto"] .sopa-grid__cell--solved {
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
+
+/* ------------------------------------------------- animaciones de proyección (fase 4) */
+
+@keyframes jla-clock-pulse {
+	0%,
+	100% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.07);
+	}
+}
+
+.play-clock--urgent {
+	color: var(--danger);
+	animation: jla-clock-pulse 1s ease-in-out infinite;
+}
+
+@keyframes jla-cell-reveal {
+	from {
+		opacity: 0.15;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.sopa-grid__cell--revealing {
+	animation: jla-cell-reveal 280ms ease-out both;
+	animation-delay: var(--reveal-delay, 0ms);
+}

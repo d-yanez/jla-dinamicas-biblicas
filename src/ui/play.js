@@ -60,7 +60,10 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 
 	function updateClock() {
 		const current = snapshot();
-		if (clockNode?.isConnected) clockNode.textContent = formatClock(current.remainingMs);
+		if (clockNode?.isConnected) {
+			clockNode.textContent = formatClock(current.remainingMs);
+			clockNode.classList.toggle("play-clock--urgent", current.running && current.remainingMs > 0 && current.remainingMs <= 5000);
+		}
 		if (current.running && prefs?.soundTension !== false) {
 			audio.startTension();
 			audio.setTension(tensionLevel(current));
@@ -360,13 +363,18 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 					directionId: entry.placement.direction,
 					length: entry.placement.normalized.length,
 				});
-				for (const index of cells ?? []) highlights.set(index, { order, word: entry.placement.normalized });
+				// Only the freshly revealed word sweeps in; the rest stay painted.
+				const newest = order === current.review.cursor - 1;
+				(cells ?? []).forEach((index, step) => {
+					highlights.set(index, { order, word: entry.placement.normalized, step: newest ? step : undefined });
+				});
 			});
 		return highlights;
 	}
 
 	function clockBlock(current) {
-		clockNode = el("div", { class: "play-clock", "aria-live": "off" }, formatClock(current.remainingMs));
+		const urgent = current.running && current.remainingMs > 0 && current.remainingMs <= 5000;
+		clockNode = el("div", { class: `play-clock${urgent ? " play-clock--urgent" : ""}`, "aria-live": "off" }, formatClock(current.remainingMs));
 		return el(
 			"div",
 			{ class: "play-clock-wrap" },

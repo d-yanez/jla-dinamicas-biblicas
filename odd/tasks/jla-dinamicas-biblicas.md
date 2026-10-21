@@ -375,3 +375,12 @@ Evidencia de fase 4: `node --test tests/*.test.mjs` → 157/157 (19 del motor de
 6. **Tres etapas de audio configurables**: fondo durante la ronda, tic de los últimos cinco segundos y campana de inicio/cierre, cada una con su interruptor en el panel de ayuda, persistidas en `prefs`.
 
 Evidencia: 158/158 unitarias (una nueva de los interruptores); `node tests/browser-smoke.mjs` → 46/46 (estado vacío de la revisión y configuración de las etapas de sonido).
+
+**L30** — Dos decisiones del usuario, implementadas.
+
+1. **Borrador independiente de la publicada (§4/S23)**, que hasta ahora no se cumplía: editar y guardar una publicada cambiaba lo que juega el público. Ahora: abrir una publicada desde la lista **crea (o reutiliza) un borrador** con `originId` y abre ese borrador; la fila publicada queda congelada; publicar ese borrador **reemplaza el contenido de la publicada conservando su identidad** (mismo id, mismo `createdAt`) y elimina el borrador. Además, tras publicar el editor **vuelve a la lista**: la fila publicada nunca se edita en el lugar. La lista muestra las dos filas y el editor rotula «Borrador de la publicada».
+2. **Animaciones de proyección**: el cronómetro **pulsa y cambia a color de alerta en los últimos 5 segundos** (sincronizado con el tic), y al revelar una solución el color **barre la palabra de inicio a fin** con un retardo por celda. Solo la palabra recién revelada se anima; las anteriores quedan pintadas. CSS puro, sin dependencias, y desactivado por `prefers-reduced-motion`.
+
+Corrección de verificación: dos pasos del smoke esperaban el badge «Publicada» dentro del editor; como publicar ahora vuelve a la lista, pasan a esperar la fila de la lista. La aserción del borrador espera la lista antes de contar filas, porque volver a la lista guarda el borrador de forma asíncrona.
+
+Evidencia: 158/158 unitarias; `node tests/browser-smoke.mjs` → 47/47 (nueva verificación: editar la publicada abre un borrador, la publicada conserva su nombre y conviven las dos filas).
