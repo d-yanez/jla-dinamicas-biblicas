@@ -1,0 +1,13 @@
+{
+  "name": "jla-dinamicas-biblicas",
+  "private": true,
+  "type": "module",
+  "description": "App estática para las dinámicas bíblicas del grupo juvenil JLA",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node tests/browser-smoke.mjs",
+    "validate:seed": "node scripts/validate-seed.mjs",
+    "check:deployed": "node scripts/check-deployed.mjs",
+    "bump": "node scripts/bump-version.mjs"
+  }
+}

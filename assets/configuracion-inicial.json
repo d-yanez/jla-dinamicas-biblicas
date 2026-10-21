@@ -2,11 +2,11 @@
   "kind": "jla.backup",
   "version": 1,
   "app": "JLA Dinámicas Bíblicas",
-  "exportedAt": "2026-10-21T00:00:00.000Z",
+  "exportedAt": "2026-10-21T18:36:24.384Z",
   "settings": {
     "displaySize": "grande",
     "highContrast": false,
-    "soundVolume": 0.3,
+    "soundVolume": 0.65,
     "muted": false,
     "soundTicks": true,
     "soundBell": true,
@@ -16,5 +16,1353 @@
     "soundCountdown": true,
     "soundClosing": true
   },
-  "activities": []
+  "activities": [
+    {
+      "id": "28c02761-eb48-4d21-9f42-323062f31b96",
+      "schema": 1,
+      "exampleKey": "palabras-ayuno-oracion",
+      "originId": "da73dc6a-f491-413d-8f60-a4c3cfb36719",
+      "type": "palabras",
+      "status": "draft",
+      "name": "Palabras desordenadas: Ayuno y oración",
+      "theme": "Ayuno y oración",
+      "reference": "Mateo 6:16-18",
+      "teaching": "El ayuno y la oración nos ayudan a buscar a Dios con atención y humildad, sin buscar la mirada de los demás.",
+      "instructions": "Vamos a jugar a las palabras desordenadas. En cada ronda se muestra una palabra con las letras mezcladas y tienen {{duracion}} para escribir la solución. Son diez rondas y cada palabra tiene hasta dos pistas.",
+      "reflection": "Jesús invita a ayunar y orar con sencillez, delante de Dios y no delante de la gente.",
+      "reflectionReference": "Mateo 6:16-18",
+      "eventName": "",
+      "eventDate": "",
+      "roundSeconds": 25,
+      "letterReveals": 0,
+      "anagramDifficulty": "media",
+      "testedAt": "",
+      "testedSignature": "",
+      "publishedAt": "",
+      "createdAt": "2026-10-21T14:57:40.089Z",
+      "updatedAt": "2026-10-21T14:57:40.089Z",
+      "game": {
+        "words": [
+          {
+            "id": "4d879a6f-cfc7-4505-9414-82e1f5a95c37",
+            "solution": "Dependencia",
+            "normalized": "DEPENDENCIA",
+            "anagram": "DENEAIECNDP",
+            "hints": [
+              "Nos recuerda que nuestras propias fuerzas no son suficientes.",
+              "Es reconocer que necesitamos a Dios en cada momento de nuestra vida."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "bce89ef2-b413-4e3c-9949-2da2837bd6d2",
+            "solution": "Reconciliación",
+            "normalized": "RECONCILIACION",
+            "anagram": "RIACCECOININOL",
+            "hints": [
+              "Por medio de Jesucristo podemos recuperar la comunión que el pecado había interrumpido.",
+              "Es volver a tener paz y una relación restaurada con Dios."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "a4020431-4346-4d96-a1bb-9c239b00544b",
+            "solution": "Humildad",
+            "normalized": "HUMILDAD",
+            "anagram": "HLDAIDUM",
+            "hints": [
+              "Se busca en la quietud, sin ruido.",
+              "Ayuda a escuchar antes de hablar."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "7b99ed19-da23-42bb-aec5-5bdf2d650564",
+            "solution": "Entrega",
+            "normalized": "ENTREGA",
+            "anagram": "EGRETAN",
+            "hints": [
+              "Implica dejar de hacer nuestra voluntad para someternos a la de Dios.",
+              "Es poner nuestra vida completamente en las manos del Señor."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "0b277893-27f1-464d-ad3e-921d93f6fc57",
+            "solution": "Perdón",
+            "normalized": "PERDON",
+            "anagram": "PRONED",
+            "hints": [
+              "Nos permite restaurar relaciones y vivir libres del resentimiento.",
+              "Es lo que pedimos a Dios cuando reconocemos nuestros pecados."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "45868215-a643-413a-adf0-3e1c7d27b72d",
+            "solution": "Quebrantamiento",
+            "normalized": "QUEBRANTAMIENTO",
+            "anagram": "QTNEATEOBNUIRMA",
+            "hints": [
+              "Nace de un corazón sensible que reconoce su necesidad de Dios.",
+              "Es humillarnos sinceramente delante del Señor con arrepentimiento."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "2d1397ef-e035-4b42-97ee-9dc873888a13",
+            "solution": "Restauración",
+            "normalized": "RESTAURACION",
+            "anagram": "RAISREUCATNO",
+            "hints": [
+              "El Señor puede realizarla en aquello que el pecado o las pruebas han dañado.",
+              "Es cuando Dios sana y reconstruye lo que estaba quebrantado."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "dc33370f-c57e-4d33-ba4a-48c6578561ac",
+            "solution": "Comunión",
+            "normalized": "COMUNION",
+            "anagram": "CINMNOUO",
+            "hints": [
+              "Se fortalece cuando buscamos juntos la presencia del Señor.",
+              "Es mantener una relación cercana con Dios y con nuestros hermanos."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "e9401e92-57e2-45d6-84f1-cf4557167223",
+            "solution": "Esperanza",
+            "normalized": "ESPERANZA",
+            "anagram": "EZNSREAAP",
+            "hints": [
+              "Nos sostiene cuando todavía no vemos cumplidas las promesas de Dios.",
+              "Es confiar en que Dios cumplirá sus promesas."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "ef54a24a-5daf-44f7-b629-3289cdd01db8",
+            "solution": "Santificación",
+            "normalized": "SANTIFICACION",
+            "anagram": "SIONAANFICTCI",
+            "hints": [
+              "Es un proceso espiritual que transforma nuestra manera de vivir.",
+              "Es apartarnos del pecado y vivir cada día más conforme a la voluntad de Dios."
+            ],
+            "reveals": []
+          }
+        ],
+        "tiebreakers": [
+          {
+            "id": "3e0fb702-5877-4940-899c-837e4e10db85",
+            "solution": "Misericordia",
+            "normalized": "MISERICORDIA",
+            "anagram": "MOAEISRDIRIC",
+            "hints": [
+              "Aunque hemos fallado, el corazón de Dios se inclina hacia nosotros con compasión.",
+              "Es cuando Dios tiene compasión de nosotros y nos ofrece perdón, aunque no lo merezcamos."
+            ]
+          },
+          {
+            "id": "29c4e65d-03f2-4164-9e69-614dc2192cd3",
+            "solution": "Perseverancia",
+            "normalized": "PERSEVERANCIA",
+            "anagram": "PCVNESARAIREE",
+            "hints": [
+              "Es permanecer firmes buscando al Señor, aun cuando llegan las pruebas y el cansancio.",
+              "Es seguir orando, ayunando y confiando en Dios sin rendirse."
+            ]
+          },
+          {
+            "id": "9f626288-88ae-4c1e-8922-ca60a8d757f5",
+            "solution": "Bendición",
+            "normalized": "BENDICION",
+            "anagram": "BINOCDNIE",
+            "hints": [
+              "No siempre es algo material; también puede ser paz, fortaleza y crecimiento espiritual.",
+              "Es un favor o regalo que recibimos de Dios por su amor y gracia."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "da73dc6a-f491-413d-8f60-a4c3cfb36719",
+      "schema": 1,
+      "exampleKey": "palabras-ayuno-oracion",
+      "originId": "",
+      "type": "palabras",
+      "status": "published",
+      "name": "Palabras desordenadas: Ayuno y oración",
+      "theme": "Ayuno y oración",
+      "reference": "Mateo 6:16-18",
+      "teaching": "El ayuno y la oración nos ayudan a buscar a Dios con atención y humildad, sin buscar la mirada de los demás.",
+      "instructions": "Vamos a jugar a las palabras desordenadas. En cada ronda se muestra una palabra con las letras mezcladas y tienen {{duracion}} para escribir la solución. Son diez rondas y cada palabra tiene hasta dos pistas.",
+      "reflection": "Jesús invita a ayunar y orar con sencillez, delante de Dios y no delante de la gente.",
+      "reflectionReference": "Mateo 6:16-18",
+      "eventName": "",
+      "eventDate": "",
+      "roundSeconds": 25,
+      "letterReveals": 0,
+      "anagramDifficulty": "media",
+      "testedAt": "",
+      "testedSignature": "{\"type\":\"palabras\",\"roundSeconds\":25,\"instructions\":\"Vamos a jugar a las palabras desordenadas. En cada ronda se muestra una palabra con las letras mezcladas y tienen {{duracion}} para escribir la solución. Son diez rondas y cada palabra tiene hasta dos pistas.\",\"letterReveals\":0,\"words\":[[\"DEPENDENCIA\",\"DENEAIECNDP\",[\"Nos recuerda que nuestras propias fuerzas no son suficientes.\",\"Es reconocer que necesitamos a Dios en cada momento de nuestra vida.\"]],[\"RECONCILIACION\",\"RIACCECOININOL\",[\"Por medio de Jesucristo podemos recuperar la comunión que el pecado había interrumpido.\",\"Es volver a tener paz y una relación restaurada con Dios.\"]],[\"HUMILDAD\",\"HLDAIDUM\",[\"Se busca en la quietud, sin ruido.\",\"Ayuda a escuchar antes de hablar.\"]],[\"ENTREGA\",\"EGRETAN\",[\"Implica dejar de hacer nuestra voluntad para someternos a la de Dios.\",\"Es poner nuestra vida completamente en las manos del Señor.\"]],[\"PERDON\",\"PRONED\",[\"Nos permite restaurar relaciones y vivir libres del resentimiento.\",\"Es lo que pedimos a Dios cuando reconocemos nuestros pecados.\"]],[\"QUEBRANTAMIENTO\",\"QTNEATEOBNUIRMA\",[\"Nace de un corazón sensible que reconoce su necesidad de Dios.\",\"Es humillarnos sinceramente delante del Señor con arrepentimiento.\"]],[\"RESTAURACION\",\"RAISREUCATNO\",[\"El Señor puede realizarla en aquello que el pecado o las pruebas han dañado.\",\"Es cuando Dios sana y reconstruye lo que estaba quebrantado.\"]],[\"COMUNION\",\"CINMNOUO\",[\"Se fortalece cuando buscamos juntos la presencia del Señor.\",\"Es mantener una relación cercana con Dios y con nuestros hermanos.\"]],[\"ESPERANZA\",\"EZNSREAAP\",[\"Nos sostiene cuando todavía no vemos cumplidas las promesas de Dios.\",\"Es confiar en que Dios cumplirá sus promesas.\"]],[\"SANTIFICACION\",\"SIONAANFICTCI\",[\"Es un proceso espiritual que transforma nuestra manera de vivir.\",\"Es apartarnos del pecado y vivir cada día más conforme a la voluntad de Dios.\"]]],\"tiebreakers\":[[\"MISERICORDIA\",\"MOAEISRDIRIC\",[\"Aunque hemos fallado, el corazón de Dios se inclina hacia nosotros con compasión.\",\"Es cuando Dios tiene compasión de nosotros y nos ofrece perdón, aunque no lo merezcamos.\"]],[\"PERSEVERANCIA\",\"PCVNESARAIREE\",[\"Es permanecer firmes buscando al Señor, aun cuando llegan las pruebas y el cansancio.\",\"Es seguir orando, ayunando y confiando en Dios sin rendirse.\"]],[\"BENDICION\",\"BINOCDNIE\",[\"No siempre es algo material; también puede ser paz, fortaleza y crecimiento espiritual.\",\"Es un favor o regalo que recibimos de Dios por su amor y gracia.\"]]]}",
+      "publishedAt": "2026-10-21T14:57:35.530Z",
+      "createdAt": "2026-10-20T20:33:39.115Z",
+      "updatedAt": "2026-10-21T14:57:35.530Z",
+      "game": {
+        "words": [
+          {
+            "id": "4d879a6f-cfc7-4505-9414-82e1f5a95c37",
+            "solution": "Dependencia",
+            "normalized": "DEPENDENCIA",
+            "anagram": "DENEAIECNDP",
+            "hints": [
+              "Nos recuerda que nuestras propias fuerzas no son suficientes.",
+              "Es reconocer que necesitamos a Dios en cada momento de nuestra vida."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "bce89ef2-b413-4e3c-9949-2da2837bd6d2",
+            "solution": "Reconciliación",
+            "normalized": "RECONCILIACION",
+            "anagram": "RIACCECOININOL",
+            "hints": [
+              "Por medio de Jesucristo podemos recuperar la comunión que el pecado había interrumpido.",
+              "Es volver a tener paz y una relación restaurada con Dios."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "a4020431-4346-4d96-a1bb-9c239b00544b",
+            "solution": "Humildad",
+            "normalized": "HUMILDAD",
+            "anagram": "HLDAIDUM",
+            "hints": [
+              "Se busca en la quietud, sin ruido.",
+              "Ayuda a escuchar antes de hablar."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "7b99ed19-da23-42bb-aec5-5bdf2d650564",
+            "solution": "Entrega",
+            "normalized": "ENTREGA",
+            "anagram": "EGRETAN",
+            "hints": [
+              "Implica dejar de hacer nuestra voluntad para someternos a la de Dios.",
+              "Es poner nuestra vida completamente en las manos del Señor."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "0b277893-27f1-464d-ad3e-921d93f6fc57",
+            "solution": "Perdón",
+            "normalized": "PERDON",
+            "anagram": "PRONED",
+            "hints": [
+              "Nos permite restaurar relaciones y vivir libres del resentimiento.",
+              "Es lo que pedimos a Dios cuando reconocemos nuestros pecados."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "45868215-a643-413a-adf0-3e1c7d27b72d",
+            "solution": "Quebrantamiento",
+            "normalized": "QUEBRANTAMIENTO",
+            "anagram": "QTNEATEOBNUIRMA",
+            "hints": [
+              "Nace de un corazón sensible que reconoce su necesidad de Dios.",
+              "Es humillarnos sinceramente delante del Señor con arrepentimiento."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "2d1397ef-e035-4b42-97ee-9dc873888a13",
+            "solution": "Restauración",
+            "normalized": "RESTAURACION",
+            "anagram": "RAISREUCATNO",
+            "hints": [
+              "El Señor puede realizarla en aquello que el pecado o las pruebas han dañado.",
+              "Es cuando Dios sana y reconstruye lo que estaba quebrantado."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "dc33370f-c57e-4d33-ba4a-48c6578561ac",
+            "solution": "Comunión",
+            "normalized": "COMUNION",
+            "anagram": "CINMNOUO",
+            "hints": [
+              "Se fortalece cuando buscamos juntos la presencia del Señor.",
+              "Es mantener una relación cercana con Dios y con nuestros hermanos."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "e9401e92-57e2-45d6-84f1-cf4557167223",
+            "solution": "Esperanza",
+            "normalized": "ESPERANZA",
+            "anagram": "EZNSREAAP",
+            "hints": [
+              "Nos sostiene cuando todavía no vemos cumplidas las promesas de Dios.",
+              "Es confiar en que Dios cumplirá sus promesas."
+            ],
+            "reveals": []
+          },
+          {
+            "id": "ef54a24a-5daf-44f7-b629-3289cdd01db8",
+            "solution": "Santificación",
+            "normalized": "SANTIFICACION",
+            "anagram": "SIONAANFICTCI",
+            "hints": [
+              "Es un proceso espiritual que transforma nuestra manera de vivir.",
+              "Es apartarnos del pecado y vivir cada día más conforme a la voluntad de Dios."
+            ],
+            "reveals": []
+          }
+        ],
+        "tiebreakers": [
+          {
+            "id": "3e0fb702-5877-4940-899c-837e4e10db85",
+            "solution": "Misericordia",
+            "normalized": "MISERICORDIA",
+            "anagram": "MOAEISRDIRIC",
+            "hints": [
+              "Aunque hemos fallado, el corazón de Dios se inclina hacia nosotros con compasión.",
+              "Es cuando Dios tiene compasión de nosotros y nos ofrece perdón, aunque no lo merezcamos."
+            ]
+          },
+          {
+            "id": "29c4e65d-03f2-4164-9e69-614dc2192cd3",
+            "solution": "Perseverancia",
+            "normalized": "PERSEVERANCIA",
+            "anagram": "PCVNESARAIREE",
+            "hints": [
+              "Es permanecer firmes buscando al Señor, aun cuando llegan las pruebas y el cansancio.",
+              "Es seguir orando, ayunando y confiando en Dios sin rendirse."
+            ]
+          },
+          {
+            "id": "9f626288-88ae-4c1e-8922-ca60a8d757f5",
+            "solution": "Bendición",
+            "normalized": "BENDICION",
+            "anagram": "BINOCDNIE",
+            "hints": [
+              "No siempre es algo material; también puede ser paz, fortaleza y crecimiento espiritual.",
+              "Es un favor o regalo que recibimos de Dios por su amor y gracia."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "735aeb2e-472b-4d7b-8cab-dfafd70eaeb9",
+      "schema": 1,
+      "exampleKey": "",
+      "originId": "9e752137-6886-4dce-ad48-bca568f27562",
+      "type": "sopa",
+      "status": "draft",
+      "name": "Sopa de letras: Ayuno y oración",
+      "theme": "Ayuno y oración",
+      "reference": "Mateo 6:16-18",
+      "teaching": "El ayuno y la oración nos ayudan a buscar a Dios con atención y humildad, sin buscar la mirada de los demás.",
+      "instructions": "Vamos a jugar a la sopa de letras. Trabajen en parejas: en cada ronda se muestra una palabra y tienen {{duracion}} para encontrarla y marcarla en la hoja. Son diez rondas; al final revisamos juntos las soluciones.",
+      "reflection": "Jesús invita a ayunar y orar con sencillez, delante de Dios y no delante de la gente.",
+      "reflectionReference": "Mateo 6:16-18",
+      "eventName": "",
+      "eventDate": "2026-10-24",
+      "roundSeconds": 30,
+      "letterReveals": 0,
+      "anagramDifficulty": "media",
+      "testedAt": "",
+      "testedSignature": "",
+      "publishedAt": "",
+      "createdAt": "2026-10-21T03:10:38.532Z",
+      "updatedAt": "2026-10-21T03:10:38.532Z",
+      "game": {
+        "words": [
+          {
+            "id": "c0c50972-2bc6-49e2-ad72-cb57737b08dd",
+            "text": "Ayuno",
+            "normalized": "AYUNO"
+          },
+          {
+            "id": "488db818-d6cb-4cae-b804-99ba93d80f54",
+            "text": "Obediencia",
+            "normalized": "OBEDIENCIA"
+          },
+          {
+            "id": "3e5595d3-08ca-4653-a0ab-725805abc83a",
+            "text": "Oración",
+            "normalized": "ORACION"
+          },
+          {
+            "id": "89e15375-1e7d-4759-a5e0-a77cbd7906fc",
+            "text": "Arrepentimiento",
+            "normalized": "ARREPENTIMIENTO"
+          },
+          {
+            "id": "5c32d786-d0b5-4796-a13e-ea1d0aba2717",
+            "text": "Consagración",
+            "normalized": "CONSAGRACION"
+          },
+          {
+            "id": "9ab67d2c-6c9d-4326-8e9f-62aae9b406a0",
+            "text": "Perdón",
+            "normalized": "PERDON"
+          },
+          {
+            "id": "2065f1b9-3df6-4f7a-b7f5-2cdff0cbdce3",
+            "text": "Gratitud",
+            "normalized": "GRATITUD"
+          },
+          {
+            "id": "e2143c0c-0723-45b2-a2e9-6c1d9b24d8bd",
+            "text": "Humildad",
+            "normalized": "HUMILDAD"
+          },
+          {
+            "id": "565f3ff1-1a72-4ea0-952e-c0d456faa8e0",
+            "text": "Comunión",
+            "normalized": "COMUNION"
+          },
+          {
+            "id": "c14c12fd-a5ca-4079-a121-44c696cb91c2",
+            "text": "Perseverancia",
+            "normalized": "PERSEVERANCIA"
+          }
+        ],
+        "variants": [
+          {
+            "id": "80add76d-d1cd-486b-b84e-6521538a4bf1",
+            "seed": "9e752137-6886-4dce-ad48-bca568f27562-718c481b-e6ff-4d4c-ade9-ab4ad74556f0",
+            "attempt": 0,
+            "size": 20,
+            "grid": "OQQSXXBEPSGSCEFMAODKCTXXHGSGQXEVATTQOQAEEEWBOJQRHHXGOYFRBLUXVIQIEYXUXUTCYOAYRXUIPIOKETMVTBASOCTTRGAKHAAXWIJJFHKNIMHTYIMCCYYRLQWVWBFOPQUNCHWSJRCDRDNOFUNZJRLNAIAJVAAXLELXWQJTYDALISNCNDCXESPBRTZGDRZCCOSOXKGLKDKEKOHEELPCNWNNXPESXIEMNCCVNDANEJGSSQMBGZAAHTEOUSEQIVDABALHICGKUSITPAFMDHRGESCHFXTNRBIMHOKKEMRRHAYUNOPEOTCEICOIBSPAHOBIBDPCADYUEEXKOEQCTHXLFWURIXRZPSNICBFIXGVAJYGGVPPEFOATHCXOWVOUUOOHDHKGPZGHOGPN",
+            "createdAt": "2026-10-20T20:14:27.731Z",
+            "placements": [
+              {
+                "wordId": "89e15375-1e7d-4759-a5e0-a77cbd7906fc",
+                "normalized": "ARREPENTIMIENTO",
+                "direction": "down-right",
+                "start": {
+                  "row": 5,
+                  "col": 2
+                },
+                "end": {
+                  "row": 19,
+                  "col": 16
+                }
+              },
+              {
+                "wordId": "c14c12fd-a5ca-4079-a121-44c696cb91c2",
+                "normalized": "PERSEVERANCIA",
+                "direction": "up-right",
+                "start": {
+                  "row": 16,
+                  "col": 6
+                },
+                "end": {
+                  "row": 4,
+                  "col": 18
+                }
+              },
+              {
+                "wordId": "5c32d786-d0b5-4796-a13e-ea1d0aba2717",
+                "normalized": "CONSAGRACION",
+                "direction": "down",
+                "start": {
+                  "row": 8,
+                  "col": 19
+                },
+                "end": {
+                  "row": 19,
+                  "col": 19
+                }
+              },
+              {
+                "wordId": "488db818-d6cb-4cae-b804-99ba93d80f54",
+                "normalized": "OBEDIENCIA",
+                "direction": "up",
+                "start": {
+                  "row": 16,
+                  "col": 16
+                },
+                "end": {
+                  "row": 7,
+                  "col": 16
+                }
+              },
+              {
+                "wordId": "2065f1b9-3df6-4f7a-b7f5-2cdff0cbdce3",
+                "normalized": "GRATITUD",
+                "direction": "up-right",
+                "start": {
+                  "row": 18,
+                  "col": 6
+                },
+                "end": {
+                  "row": 11,
+                  "col": 13
+                }
+              },
+              {
+                "wordId": "e2143c0c-0723-45b2-a2e9-6c1d9b24d8bd",
+                "normalized": "HUMILDAD",
+                "direction": "down-left",
+                "start": {
+                  "row": 2,
+                  "col": 8
+                },
+                "end": {
+                  "row": 9,
+                  "col": 1
+                }
+              },
+              {
+                "wordId": "565f3ff1-1a72-4ea0-952e-c0d456faa8e0",
+                "normalized": "COMUNION",
+                "direction": "down-right",
+                "start": {
+                  "row": 3,
+                  "col": 11
+                },
+                "end": {
+                  "row": 10,
+                  "col": 18
+                }
+              },
+              {
+                "wordId": "3e5595d3-08ca-4653-a0ab-725805abc83a",
+                "normalized": "ORACION",
+                "direction": "down-left",
+                "start": {
+                  "row": 1,
+                  "col": 16
+                },
+                "end": {
+                  "row": 7,
+                  "col": 10
+                }
+              },
+              {
+                "wordId": "9ab67d2c-6c9d-4326-8e9f-62aae9b406a0",
+                "normalized": "PERDON",
+                "direction": "up-left",
+                "start": {
+                  "row": 19,
+                  "col": 12
+                },
+                "end": {
+                  "row": 14,
+                  "col": 7
+                }
+              },
+              {
+                "wordId": "c0c50972-2bc6-49e2-ad72-cb57737b08dd",
+                "normalized": "AYUNO",
+                "direction": "right",
+                "start": {
+                  "row": 15,
+                  "col": 1
+                },
+                "end": {
+                  "row": 15,
+                  "col": 5
+                }
+              }
+            ]
+          },
+          {
+            "id": "6ba562b2-c3f6-4e62-9fb4-e977c7e31965",
+            "seed": "9e752137-6886-4dce-ad48-bca568f27562-ca2e478b-e72b-4ebf-aa4d-bd0aedb8dbf4",
+            "attempt": 0,
+            "size": 20,
+            "grid": "FOAQBUDADLIMUHOVVQIBVLZPGXGYXZZVFYESGHESONLTEPMKKPPDANCZXSVGKRWAMXSMEDFPVDPNBUTZCKAWKOEEEAXQNPPUQLZFOMWCATIJJVYNYOEADAOIMFRIIFXHSUURUXURYDJOUSCKYOOSQRYBMUNFDUXZNNOODHNRUHLHAWCZLONVIHTZVRNPNUFZIRQGWJNOOMVCONSAGRACIONBKASENVGOHGNAICNAREVESREPEHRCLIOBEDIENCIAVLTCMPAUNVZXTOYPRNMUXEZAYYTZMOTNEIMITNEPERRAOVIBYLXMPUARBHYRZTSHCQTPCALFPZXBGMUFOFBXQNUYKKJPPAQFXXJBUAOHFGDALZQSNZVCOODFGTKWVFSVTSICPKQOVHPSXBZE",
+            "createdAt": "2026-10-20T20:14:27.732Z",
+            "placements": [
+              {
+                "wordId": "89e15375-1e7d-4759-a5e0-a77cbd7906fc",
+                "normalized": "ARREPENTIMIENTO",
+                "direction": "left",
+                "start": {
+                  "row": 14,
+                  "col": 19
+                },
+                "end": {
+                  "row": 14,
+                  "col": 5
+                }
+              },
+              {
+                "wordId": "c14c12fd-a5ca-4079-a121-44c696cb91c2",
+                "normalized": "PERSEVERANCIA",
+                "direction": "left",
+                "start": {
+                  "row": 11,
+                  "col": 19
+                },
+                "end": {
+                  "row": 11,
+                  "col": 7
+                }
+              },
+              {
+                "wordId": "5c32d786-d0b5-4796-a13e-ea1d0aba2717",
+                "normalized": "CONSAGRACION",
+                "direction": "right",
+                "start": {
+                  "row": 10,
+                  "col": 3
+                },
+                "end": {
+                  "row": 10,
+                  "col": 14
+                }
+              },
+              {
+                "wordId": "488db818-d6cb-4cae-b804-99ba93d80f54",
+                "normalized": "OBEDIENCIA",
+                "direction": "right",
+                "start": {
+                  "row": 12,
+                  "col": 6
+                },
+                "end": {
+                  "row": 12,
+                  "col": 15
+                }
+              },
+              {
+                "wordId": "2065f1b9-3df6-4f7a-b7f5-2cdff0cbdce3",
+                "normalized": "GRATITUD",
+                "direction": "down",
+                "start": {
+                  "row": 11,
+                  "col": 2
+                },
+                "end": {
+                  "row": 18,
+                  "col": 2
+                }
+              },
+              {
+                "wordId": "e2143c0c-0723-45b2-a2e9-6c1d9b24d8bd",
+                "normalized": "HUMILDAD",
+                "direction": "left",
+                "start": {
+                  "row": 0,
+                  "col": 13
+                },
+                "end": {
+                  "row": 0,
+                  "col": 6
+                }
+              },
+              {
+                "wordId": "565f3ff1-1a72-4ea0-952e-c0d456faa8e0",
+                "normalized": "COMUNION",
+                "direction": "down",
+                "start": {
+                  "row": 4,
+                  "col": 0
+                },
+                "end": {
+                  "row": 11,
+                  "col": 0
+                }
+              },
+              {
+                "wordId": "3e5595d3-08ca-4653-a0ab-725805abc83a",
+                "normalized": "ORACION",
+                "direction": "down-right",
+                "start": {
+                  "row": 2,
+                  "col": 0
+                },
+                "end": {
+                  "row": 8,
+                  "col": 6
+                }
+              },
+              {
+                "wordId": "9ab67d2c-6c9d-4326-8e9f-62aae9b406a0",
+                "normalized": "PERDON",
+                "direction": "down-right",
+                "start": {
+                  "row": 4,
+                  "col": 13
+                },
+                "end": {
+                  "row": 9,
+                  "col": 18
+                }
+              },
+              {
+                "wordId": "c0c50972-2bc6-49e2-ad72-cb57737b08dd",
+                "normalized": "AYUNO",
+                "direction": "down-right",
+                "start": {
+                  "row": 5,
+                  "col": 15
+                },
+                "end": {
+                  "row": 9,
+                  "col": 19
+                }
+              }
+            ]
+          },
+          {
+            "id": "ad2d4670-facc-48dd-8bd2-55d675210f07",
+            "seed": "9e752137-6886-4dce-ad48-bca568f27562-9099f16b-6d7e-4892-96e1-1353745f660c",
+            "attempt": 0,
+            "size": 20,
+            "grid": "DHXCHPNAMQDDNOZIBCWOYYGDPXYLYFNLXXNUHCJYPIDLRMAFQWOIFSGOXCYXLWBSRPZLVBIHHBJWYSAONAZNMXJXNICUSOPJJCIRHGRNCQMCISAAHWEAACLAISSRNODREPRWMQRJJMFCJYVCEGYDFJGDZQSHLYWIOXRQVPKPALAHFAEBRYHOXONKMGETNFSHXYVXKNKNLCBWKZBNZRNOUUEBXCTYEESIUBQATCOBFNRWSNPBZVFTWCZMHICELOAJTODUIPLAUGVUVLMDAPNBAIUFDDZRDAMWOYLIUICIENTXXPCVLIUMIVXEEDIYIUIELIUDLGKDNMENCNAZGMTAXQIDFRBMRASCBCTSJOAXIRAPXACRFDPISYMOFCROFDCHNNAAMYHAIOQAAAGG",
+            "createdAt": "2026-10-20T20:14:27.732Z",
+            "placements": [
+              {
+                "wordId": "89e15375-1e7d-4759-a5e0-a77cbd7906fc",
+                "normalized": "ARREPENTIMIENTO",
+                "direction": "down-right",
+                "start": {
+                  "row": 4,
+                  "col": 1
+                },
+                "end": {
+                  "row": 18,
+                  "col": 15
+                }
+              },
+              {
+                "wordId": "c14c12fd-a5ca-4079-a121-44c696cb91c2",
+                "normalized": "PERSEVERANCIA",
+                "direction": "down",
+                "start": {
+                  "row": 4,
+                  "col": 14
+                },
+                "end": {
+                  "row": 16,
+                  "col": 14
+                }
+              },
+              {
+                "wordId": "5c32d786-d0b5-4796-a13e-ea1d0aba2717",
+                "normalized": "CONSAGRACION",
+                "direction": "up",
+                "start": {
+                  "row": 12,
+                  "col": 10
+                },
+                "end": {
+                  "row": 1,
+                  "col": 10
+                }
+              },
+              {
+                "wordId": "488db818-d6cb-4cae-b804-99ba93d80f54",
+                "normalized": "OBEDIENCIA",
+                "direction": "down",
+                "start": {
+                  "row": 10,
+                  "col": 11
+                },
+                "end": {
+                  "row": 19,
+                  "col": 11
+                }
+              },
+              {
+                "wordId": "2065f1b9-3df6-4f7a-b7f5-2cdff0cbdce3",
+                "normalized": "GRATITUD",
+                "direction": "up",
+                "start": {
+                  "row": 19,
+                  "col": 18
+                },
+                "end": {
+                  "row": 12,
+                  "col": 18
+                }
+              },
+              {
+                "wordId": "e2143c0c-0723-45b2-a2e9-6c1d9b24d8bd",
+                "normalized": "HUMILDAD",
+                "direction": "down-left",
+                "start": {
+                  "row": 12,
+                  "col": 8
+                },
+                "end": {
+                  "row": 19,
+                  "col": 1
+                }
+              },
+              {
+                "wordId": "565f3ff1-1a72-4ea0-952e-c0d456faa8e0",
+                "normalized": "COMUNION",
+                "direction": "up",
+                "start": {
+                  "row": 18,
+                  "col": 17
+                },
+                "end": {
+                  "row": 11,
+                  "col": 17
+                }
+              },
+              {
+                "wordId": "3e5595d3-08ca-4653-a0ab-725805abc83a",
+                "normalized": "ORACION",
+                "direction": "down",
+                "start": {
+                  "row": 3,
+                  "col": 19
+                },
+                "end": {
+                  "row": 9,
+                  "col": 19
+                }
+              },
+              {
+                "wordId": "9ab67d2c-6c9d-4326-8e9f-62aae9b406a0",
+                "normalized": "PERDON",
+                "direction": "left",
+                "start": {
+                  "row": 6,
+                  "col": 9
+                },
+                "end": {
+                  "row": 6,
+                  "col": 4
+                }
+              },
+              {
+                "wordId": "c0c50972-2bc6-49e2-ad72-cb57737b08dd",
+                "normalized": "AYUNO",
+                "direction": "down",
+                "start": {
+                  "row": 8,
+                  "col": 13
+                },
+                "end": {
+                  "row": 12,
+                  "col": 13
+                }
+              }
+            ]
+          }
+        ],
+        "approvedVariantId": "80add76d-d1cd-486b-b84e-6521538a4bf1"
+      }
+    },
+    {
+      "id": "9e752137-6886-4dce-ad48-bca568f27562",
+      "schema": 1,
+      "exampleKey": "",
+      "originId": "",
+      "type": "sopa",
+      "status": "published",
+      "name": "Sopa de letras: Ayuno y oración",
+      "theme": "Ayuno y oración",
+      "reference": "Mateo 6:16-18",
+      "teaching": "El ayuno y la oración nos ayudan a buscar a Dios con atención y humildad, sin buscar la mirada de los demás.",
+      "instructions": "Vamos a jugar a la sopa de letras. Trabajen en parejas: en cada ronda se muestra una palabra y tienen {{duracion}} para encontrarla y marcarla en la hoja. Son diez rondas; al final revisamos juntos las soluciones.",
+      "reflection": "Jesús invita a ayunar y orar con sencillez, delante de Dios y no delante de la gente.",
+      "reflectionReference": "Mateo 6:16-18",
+      "eventName": "",
+      "eventDate": "2026-10-24",
+      "roundSeconds": 30,
+      "letterReveals": 0,
+      "anagramDifficulty": "media",
+      "testedAt": "",
+      "testedSignature": "{\"type\":\"sopa\",\"roundSeconds\":30,\"instructions\":\"Vamos a jugar a la sopa de letras. Trabajen en parejas: en cada ronda se muestra una palabra y tienen {{duracion}} para encontrarla y marcarla en la hoja. Son diez rondas; al final revisamos juntos las soluciones.\",\"words\":\"ARREPENTIMIENTO|AYUNO|COMUNION|CONSAGRACION|GRATITUD|HUMILDAD|OBEDIENCIA|ORACION|PERDON|PERSEVERANCIA\",\"grid\":\"OQQSXXBEPSGSCEFMAODKCTXXHGSGQXEVATTQOQAEEEWBOJQRHHXGOYFRBLUXVIQIEYXUXUTCYOAYRXUIPIOKETMVTBASOCTTRGAKHAAXWIJJFHKNIMHTYIMCCYYRLQWVWBFOPQUNCHWSJRCDRDNOFUNZJRLNAIAJVAAXLELXWQJTYDALISNCNDCXESPBRTZGDRZCCOSOXKGLKDKEKOHEELPCNWNNXPESXIEMNCCVNDANEJGSSQMBGZAAHTEOUSEQIVDABALHICGKUSITPAFMDHRGESCHFXTNRBIMHOKKEMRRHAYUNOPEOTCEICOIBSPAHOBIBDPCADYUEEXKOEQCTHXLFWURIXRZPSNICBFIXGVAJYGGVPPEFOATHCXOWVOUUOOHDHKGPZGHOGPN\",\"placements\":[[\"ARREPENTIMIENTO\",\"down-right\",5,2],[\"PERSEVERANCIA\",\"up-right\",16,6],[\"CONSAGRACION\",\"down\",8,19],[\"OBEDIENCIA\",\"up\",16,16],[\"GRATITUD\",\"up-right\",18,6],[\"HUMILDAD\",\"down-left\",2,8],[\"COMUNION\",\"down-right\",3,11],[\"ORACION\",\"down-left\",1,16],[\"PERDON\",\"up-left\",19,12],[\"AYUNO\",\"right\",15,1]]}",
+      "publishedAt": "2026-10-21T02:59:22.479Z",
+      "createdAt": "2026-10-20T04:19:31.277Z",
+      "updatedAt": "2026-10-21T02:59:22.479Z",
+      "game": {
+        "words": [
+          {
+            "id": "c0c50972-2bc6-49e2-ad72-cb57737b08dd",
+            "text": "Ayuno",
+            "normalized": "AYUNO"
+          },
+          {
+            "id": "488db818-d6cb-4cae-b804-99ba93d80f54",
+            "text": "Obediencia",
+            "normalized": "OBEDIENCIA"
+          },
+          {
+            "id": "3e5595d3-08ca-4653-a0ab-725805abc83a",
+            "text": "Oración",
+            "normalized": "ORACION"
+          },
+          {
+            "id": "89e15375-1e7d-4759-a5e0-a77cbd7906fc",
+            "text": "Arrepentimiento",
+            "normalized": "ARREPENTIMIENTO"
+          },
+          {
+            "id": "5c32d786-d0b5-4796-a13e-ea1d0aba2717",
+            "text": "Consagración",
+            "normalized": "CONSAGRACION"
+          },
+          {
+            "id": "9ab67d2c-6c9d-4326-8e9f-62aae9b406a0",
+            "text": "Perdón",
+            "normalized": "PERDON"
+          },
+          {
+            "id": "2065f1b9-3df6-4f7a-b7f5-2cdff0cbdce3",
+            "text": "Gratitud",
+            "normalized": "GRATITUD"
+          },
+          {
+            "id": "e2143c0c-0723-45b2-a2e9-6c1d9b24d8bd",
+            "text": "Humildad",
+            "normalized": "HUMILDAD"
+          },
+          {
+            "id": "565f3ff1-1a72-4ea0-952e-c0d456faa8e0",
+            "text": "Comunión",
+            "normalized": "COMUNION"
+          },
+          {
+            "id": "c14c12fd-a5ca-4079-a121-44c696cb91c2",
+            "text": "Perseverancia",
+            "normalized": "PERSEVERANCIA"
+          }
+        ],
+        "variants": [
+          {
+            "id": "80add76d-d1cd-486b-b84e-6521538a4bf1",
+            "seed": "9e752137-6886-4dce-ad48-bca568f27562-718c481b-e6ff-4d4c-ade9-ab4ad74556f0",
+            "attempt": 0,
+            "size": 20,
+            "grid": "OQQSXXBEPSGSCEFMAODKCTXXHGSGQXEVATTQOQAEEEWBOJQRHHXGOYFRBLUXVIQIEYXUXUTCYOAYRXUIPIOKETMVTBASOCTTRGAKHAAXWIJJFHKNIMHTYIMCCYYRLQWVWBFOPQUNCHWSJRCDRDNOFUNZJRLNAIAJVAAXLELXWQJTYDALISNCNDCXESPBRTZGDRZCCOSOXKGLKDKEKOHEELPCNWNNXPESXIEMNCCVNDANEJGSSQMBGZAAHTEOUSEQIVDABALHICGKUSITPAFMDHRGESCHFXTNRBIMHOKKEMRRHAYUNOPEOTCEICOIBSPAHOBIBDPCADYUEEXKOEQCTHXLFWURIXRZPSNICBFIXGVAJYGGVPPEFOATHCXOWVOUUOOHDHKGPZGHOGPN",
+            "createdAt": "2026-10-20T20:14:27.731Z",
+            "placements": [
+              {
+                "wordId": "89e15375-1e7d-4759-a5e0-a77cbd7906fc",
+                "normalized": "ARREPENTIMIENTO",
+                "direction": "down-right",
+                "start": {
+                  "row": 5,
+                  "col": 2
+                },
+                "end": {
+                  "row": 19,
+                  "col": 16
+                }
+              },
+              {
+                "wordId": "c14c12fd-a5ca-4079-a121-44c696cb91c2",
+                "normalized": "PERSEVERANCIA",
+                "direction": "up-right",
+                "start": {
+                  "row": 16,
+                  "col": 6
+                },
+                "end": {
+                  "row": 4,
+                  "col": 18
+                }
+              },
+              {
+                "wordId": "5c32d786-d0b5-4796-a13e-ea1d0aba2717",
+                "normalized": "CONSAGRACION",
+                "direction": "down",
+                "start": {
+                  "row": 8,
+                  "col": 19
+                },
+                "end": {
+                  "row": 19,
+                  "col": 19
+                }
+              },
+              {
+                "wordId": "488db818-d6cb-4cae-b804-99ba93d80f54",
+                "normalized": "OBEDIENCIA",
+                "direction": "up",
+                "start": {
+                  "row": 16,
+                  "col": 16
+                },
+                "end": {
+                  "row": 7,
+                  "col": 16
+                }
+              },
+              {
+                "wordId": "2065f1b9-3df6-4f7a-b7f5-2cdff0cbdce3",
+                "normalized": "GRATITUD",
+                "direction": "up-right",
+                "start": {
+                  "row": 18,
+                  "col": 6
+                },
+                "end": {
+                  "row": 11,
+                  "col": 13
+                }
+              },
+              {
+                "wordId": "e2143c0c-0723-45b2-a2e9-6c1d9b24d8bd",
+                "normalized": "HUMILDAD",
+                "direction": "down-left",
+                "start": {
+                  "row": 2,
+                  "col": 8
+                },
+                "end": {
+                  "row": 9,
+                  "col": 1
+                }
+              },
+              {
+                "wordId": "565f3ff1-1a72-4ea0-952e-c0d456faa8e0",
+                "normalized": "COMUNION",
+                "direction": "down-right",
+                "start": {
+                  "row": 3,
+                  "col": 11
+                },
+                "end": {
+                  "row": 10,
+                  "col": 18
+                }
+              },
+              {
+                "wordId": "3e5595d3-08ca-4653-a0ab-725805abc83a",
+                "normalized": "ORACION",
+                "direction": "down-left",
+                "start": {
+                  "row": 1,
+                  "col": 16
+                },
+                "end": {
+                  "row": 7,
+                  "col": 10
+                }
+              },
+              {
+                "wordId": "9ab67d2c-6c9d-4326-8e9f-62aae9b406a0",
+                "normalized": "PERDON",
+                "direction": "up-left",
+                "start": {
+                  "row": 19,
+                  "col": 12
+                },
+                "end": {
+                  "row": 14,
+                  "col": 7
+                }
+              },
+              {
+                "wordId": "c0c50972-2bc6-49e2-ad72-cb57737b08dd",
+                "normalized": "AYUNO",
+                "direction": "right",
+                "start": {
+                  "row": 15,
+                  "col": 1
+                },
+                "end": {
+                  "row": 15,
+                  "col": 5
+                }
+              }
+            ]
+          },
+          {
+            "id": "6ba562b2-c3f6-4e62-9fb4-e977c7e31965",
+            "seed": "9e752137-6886-4dce-ad48-bca568f27562-ca2e478b-e72b-4ebf-aa4d-bd0aedb8dbf4",
+            "attempt": 0,
+            "size": 20,
+            "grid": "FOAQBUDADLIMUHOVVQIBVLZPGXGYXZZVFYESGHESONLTEPMKKPPDANCZXSVGKRWAMXSMEDFPVDPNBUTZCKAWKOEEEAXQNPPUQLZFOMWCATIJJVYNYOEADAOIMFRIIFXHSUURUXURYDJOUSCKYOOSQRYBMUNFDUXZNNOODHNRUHLHAWCZLONVIHTZVRNPNUFZIRQGWJNOOMVCONSAGRACIONBKASENVGOHGNAICNAREVESREPEHRCLIOBEDIENCIAVLTCMPAUNVZXTOYPRNMUXEZAYYTZMOTNEIMITNEPERRAOVIBYLXMPUARBHYRZTSHCQTPCALFPZXBGMUFOFBXQNUYKKJPPAQFXXJBUAOHFGDALZQSNZVCOODFGTKWVFSVTSICPKQOVHPSXBZE",
+            "createdAt": "2026-10-20T20:14:27.732Z",
+            "placements": [
+              {
+                "wordId": "89e15375-1e7d-4759-a5e0-a77cbd7906fc",
+                "normalized": "ARREPENTIMIENTO",
+                "direction": "left",
+                "start": {
+                  "row": 14,
+                  "col": 19
+                },
+                "end": {
+                  "row": 14,
+                  "col": 5
+                }
+              },
+              {
+                "wordId": "c14c12fd-a5ca-4079-a121-44c696cb91c2",
+                "normalized": "PERSEVERANCIA",
+                "direction": "left",
+                "start": {
+                  "row": 11,
+                  "col": 19
+                },
+                "end": {
+                  "row": 11,
+                  "col": 7
+                }
+              },
+              {
+                "wordId": "5c32d786-d0b5-4796-a13e-ea1d0aba2717",
+                "normalized": "CONSAGRACION",
+                "direction": "right",
+                "start": {
+                  "row": 10,
+                  "col": 3
+                },
+                "end": {
+                  "row": 10,
+                  "col": 14
+                }
+              },
+              {
+                "wordId": "488db818-d6cb-4cae-b804-99ba93d80f54",
+                "normalized": "OBEDIENCIA",
+                "direction": "right",
+                "start": {
+                  "row": 12,
+                  "col": 6
+                },
+                "end": {
+                  "row": 12,
+                  "col": 15
+                }
+              },
+              {
+                "wordId": "2065f1b9-3df6-4f7a-b7f5-2cdff0cbdce3",
+                "normalized": "GRATITUD",
+                "direction": "down",
+                "start": {
+                  "row": 11,
+                  "col": 2
+                },
+                "end": {
+                  "row": 18,
+                  "col": 2
+                }
+              },
+              {
+                "wordId": "e2143c0c-0723-45b2-a2e9-6c1d9b24d8bd",
+                "normalized": "HUMILDAD",
+                "direction": "left",
+                "start": {
+                  "row": 0,
+                  "col": 13
+                },
+                "end": {
+                  "row": 0,
+                  "col": 6
+                }
+              },
+              {
+                "wordId": "565f3ff1-1a72-4ea0-952e-c0d456faa8e0",
+                "normalized": "COMUNION",
+                "direction": "down",
+                "start": {
+                  "row": 4,
+                  "col": 0
+                },
+                "end": {
+                  "row": 11,
+                  "col": 0
+                }
+              },
+              {
+                "wordId": "3e5595d3-08ca-4653-a0ab-725805abc83a",
+                "normalized": "ORACION",
+                "direction": "down-right",
+                "start": {
+                  "row": 2,
+                  "col": 0
+                },
+                "end": {
+                  "row": 8,
+                  "col": 6
+                }
+              },
+              {
+                "wordId": "9ab67d2c-6c9d-4326-8e9f-62aae9b406a0",
+                "normalized": "PERDON",
+                "direction": "down-right",
+                "start": {
+                  "row": 4,
+                  "col": 13
+                },
+                "end": {
+                  "row": 9,
+                  "col": 18
+                }
+              },
+              {
+                "wordId": "c0c50972-2bc6-49e2-ad72-cb57737b08dd",
+                "normalized": "AYUNO",
+                "direction": "down-right",
+                "start": {
+                  "row": 5,
+                  "col": 15
+                },
+                "end": {
+                  "row": 9,
+                  "col": 19
+                }
+              }
+            ]
+          },
+          {
+            "id": "ad2d4670-facc-48dd-8bd2-55d675210f07",
+            "seed": "9e752137-6886-4dce-ad48-bca568f27562-9099f16b-6d7e-4892-96e1-1353745f660c",
+            "attempt": 0,
+            "size": 20,
+            "grid": "DHXCHPNAMQDDNOZIBCWOYYGDPXYLYFNLXXNUHCJYPIDLRMAFQWOIFSGOXCYXLWBSRPZLVBIHHBJWYSAONAZNMXJXNICUSOPJJCIRHGRNCQMCISAAHWEAACLAISSRNODREPRWMQRJJMFCJYVCEGYDFJGDZQSHLYWIOXRQVPKPALAHFAEBRYHOXONKMGETNFSHXYVXKNKNLCBWKZBNZRNOUUEBXCTYEESIUBQATCOBFNRWSNPBZVFTWCZMHICELOAJTODUIPLAUGVUVLMDAPNBAIUFDDZRDAMWOYLIUICIENTXXPCVLIUMIVXEEDIYIUIELIUDLGKDNMENCNAZGMTAXQIDFRBMRASCBCTSJOAXIRAPXACRFDPISYMOFCROFDCHNNAAMYHAIOQAAAGG",
+            "createdAt": "2026-10-20T20:14:27.732Z",
+            "placements": [
+              {
+                "wordId": "89e15375-1e7d-4759-a5e0-a77cbd7906fc",
+                "normalized": "ARREPENTIMIENTO",
+                "direction": "down-right",
+                "start": {
+                  "row": 4,
+                  "col": 1
+                },
+                "end": {
+                  "row": 18,
+                  "col": 15
+                }
+              },
+              {
+                "wordId": "c14c12fd-a5ca-4079-a121-44c696cb91c2",
+                "normalized": "PERSEVERANCIA",
+                "direction": "down",
+                "start": {
+                  "row": 4,
+                  "col": 14
+                },
+                "end": {
+                  "row": 16,
+                  "col": 14
+                }
+              },
+              {
+                "wordId": "5c32d786-d0b5-4796-a13e-ea1d0aba2717",
+                "normalized": "CONSAGRACION",
+                "direction": "up",
+                "start": {
+                  "row": 12,
+                  "col": 10
+                },
+                "end": {
+                  "row": 1,
+                  "col": 10
+                }
+              },
+              {
+                "wordId": "488db818-d6cb-4cae-b804-99ba93d80f54",
+                "normalized": "OBEDIENCIA",
+                "direction": "down",
+                "start": {
+                  "row": 10,
+                  "col": 11
+                },
+                "end": {
+                  "row": 19,
+                  "col": 11
+                }
+              },
+              {
+                "wordId": "2065f1b9-3df6-4f7a-b7f5-2cdff0cbdce3",
+                "normalized": "GRATITUD",
+                "direction": "up",
+                "start": {
+                  "row": 19,
+                  "col": 18
+                },
+                "end": {
+                  "row": 12,
+                  "col": 18
+                }
+              },
+              {
+                "wordId": "e2143c0c-0723-45b2-a2e9-6c1d9b24d8bd",
+                "normalized": "HUMILDAD",
+                "direction": "down-left",
+                "start": {
+                  "row": 12,
+                  "col": 8
+                },
+                "end": {
+                  "row": 19,
+                  "col": 1
+                }
+              },
+              {
+                "wordId": "565f3ff1-1a72-4ea0-952e-c0d456faa8e0",
+                "normalized": "COMUNION",
+                "direction": "up",
+                "start": {
+                  "row": 18,
+                  "col": 17
+                },
+                "end": {
+                  "row": 11,
+                  "col": 17
+                }
+              },
+              {
+                "wordId": "3e5595d3-08ca-4653-a0ab-725805abc83a",
+                "normalized": "ORACION",
+                "direction": "down",
+                "start": {
+                  "row": 3,
+                  "col": 19
+                },
+                "end": {
+                  "row": 9,
+                  "col": 19
+                }
+              },
+              {
+                "wordId": "9ab67d2c-6c9d-4326-8e9f-62aae9b406a0",
+                "normalized": "PERDON",
+                "direction": "left",
+                "start": {
+                  "row": 6,
+                  "col": 9
+                },
+                "end": {
+                  "row": 6,
+                  "col": 4
+                }
+              },
+              {
+                "wordId": "c0c50972-2bc6-49e2-ad72-cb57737b08dd",
+                "normalized": "AYUNO",
+                "direction": "down",
+                "start": {
+                  "row": 8,
+                  "col": 13
+                },
+                "end": {
+                  "row": 12,
+                  "col": 13
+                }
+              }
+            ]
+          }
+        ],
+        "approvedVariantId": "80add76d-d1cd-486b-b84e-6521538a4bf1"
+      }
+    }
+  ],
+  "appVersion": "0.6.0"
 }
