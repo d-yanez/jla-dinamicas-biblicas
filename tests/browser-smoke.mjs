@@ -86,6 +86,15 @@ const problems = [];
 try {
 	const context = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 900 } });
 	const page = await context.newPage();
+	// The repository ships a bundled seed for real deployments; this suite tests the
+	// demonstration-example flow, so it hides the seed and exercises the fallback.
+	await page.route("**/assets/configuracion-inicial.json", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({ kind: "jla.backup", version: 1, app: "JLA", exportedAt: "2026-01-01T00:00:00.000Z", settings: {}, activities: [] }),
+		}),
+	);
 	// Count real WebAudio oscillators: "there is music" is checked here, not by ear.
 	await page.addInitScript(() => {
 		window.__oscillators = 0;

@@ -493,3 +493,11 @@ Causa: `overflow-wrap: anywhere` en `.play-target` permitía cortar la palabra, 
 Corrección: `white-space: nowrap` y tamaño derivado de las letras que tienen que entrar (`min(92vw, 68rem) / (letras × 0.78)`), con el avance del monoespaciado (~0.66em por letra) y margen. Nunca se parte y nunca se desborda.
 
 Verificación nueva en el smoke: en plena ronda se cambia el viewport a **1920×1080**, se exige que `.play-target` ocupe **una sola línea** (`getClientRects().length === 1`) y que no desborde (`scrollWidth <= clientWidth`).
+
+**L42** — Configuración inicial instalada con el respaldo del usuario.
+
+- Se podó el respaldo exportado (4 actividades: un borrador y una publicada por juego) a **solo las dos publicadas**, que es lo que debe ver un navegador nuevo: abre listo para jugar y sin nombres repetidos. Validado con `node scripts/validate-seed.mjs` → 2 actividades, una publicada por juego.
+- Se agregó `package.json` con `"type": "module"` y scripts de conveniencia (`npm test`, `npm run validate:seed`, `npm run check:deployed`): elimina los avisos de Node que aparecían al correr los scripts.
+- **La verificación se partió en dos**, porque ahora el navegador limpio ya no muestra los ejemplos:
+  - `tests/browser-smoke.mjs` intercepta `assets/configuracion-inicial.json` y sirve un **respaldo válido y vacío**, para seguir probando el flujo de ejemplos de forma determinista. Un 404 servía igual, pero ensuciaba la consola y el propio smoke exige consola limpia: 52/52.
+  - `tests/seed-smoke.mjs` (nuevo) es el único lugar donde se ejerce la semilla **real**: navegador sin datos → carga las dos actividades publicadas, la portada ofrece ambos juegos y los dos arrancan una ronda. 4/4.
