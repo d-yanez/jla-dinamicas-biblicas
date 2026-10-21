@@ -440,3 +440,11 @@ Verificado en un navegador real con una ronda de 10 segundos: a los 10 s aparece
 También quedó cerrado el **desempate en vivo** (era el hueco de §6 en la fase 4): nueva etapa `TIEBREAKER` en el motor con cinco pruebas (se abre solo desde la revisión, sin cronómetro, anagrama primero y respuesta revelada a mano, tres palabras, retroceso y guarda anti doble acción) y su pantalla con «Mostrar palabra», «Revelar respuesta», anterior/siguiente y vuelta a la revisión.
 
 Evidencia: 179/179 unitarias; 50/50 de navegador en local.
+
+**L36** — «No hay música de fondo en ninguno de los dos juegos». Era un **bug de lógica**: la compuerta de la música estaba **invertida**. `startMusic` la consultaba como «¿está apagada?», mientras que la pantalla de juego la respondía como «¿está encendida?». Resultado: todo bucle se detenía antes de crear siquiera el contexto de audio. Por eso el lobby no sonaba nunca y la ronda solo tenía cuenta regresiva y campana.
+
+Cómo se encontró: instrumentando WebAudio (`createOscillator` parcheado) en vez de escuchar. En la introducción había **0 osciladores y 0 contextos**; en la ronda, 9 osciladores que eran exactamente los beeps y la campana. Después del arreglo: lobby 7 osciladores y la ronda sigue sumando (33 en la muestra).
+
+Corrección: la compuerta pasó a llamarse `musicAllowed` (por defecto `true`) y `startMusic` la consulta como «¿está permitida?». Se agregó además una **prueba de regresión en el smoke**: un init script cuenta osciladores reales y el paso de la ronda exige que el contador crezca mientras corre el reloj. El smoke también lanza el navegador con `--autoplay-policy=no-user-gesture-required`, y dejó de apagar «Música mientras responden» al probar la persistencia de interruptores: estaba silenciando justo lo que después verifica.
+
+Evidencia: 179/179 unitarias; 50/50 de navegador, ahora incluyendo «la música de pregunta debe seguir generando notas mientras corre el reloj».

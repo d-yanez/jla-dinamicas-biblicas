@@ -80,12 +80,23 @@ async function step(name, run) {
 const { server, baseUrl } = process.env.JLA_BASE_URL
 	? { server: undefined, baseUrl: process.env.JLA_BASE_URL }
 	: await startStaticServer();
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required"] });
 const problems = [];
 
 try {
 	const context = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 900 } });
 	const page = await context.newPage();
+	// Count real WebAudio oscillators: "there is music" is checked here, not by ear.
+	await page.addInitScript(() => {
+		window.__oscillators = 0;
+		const proto = window.AudioContext?.prototype;
+		if (!proto) return;
+		const original = proto.createOscillator;
+		proto.createOscillator = function patched(...args) {
+			window.__oscillators += 1;
+			return original.apply(this, args);
+		};
+	});
 	page.on("console", (message) => {
 		if (message.type() === "error") problems.push(`console: ${message.text()}`);
 	});
@@ -171,11 +182,13 @@ try {
 
 	await step("el sonido se configura desde el panel de administración", async () => {
 		await page.getByRole("heading", { name: "Sonido", exact: true }).waitFor();
-		const music = page.getByLabel("Música mientras responden");
-		await music.uncheck();
+		// Toggle a switch that does not affect the play session checked later: turning the
+		// question music off here would silence the very thing that verifies it plays.
+		const reveal = page.getByLabel("Sonido al revelar una solución");
+		await reveal.uncheck();
 		await page.waitForTimeout(200);
 		const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("jla.prefs") ?? "null"));
-		assert.equal(stored?.soundQuestion, false, "el interruptor de música queda guardado");
+		assert.equal(stored?.soundReveal, false, "el interruptor elegido queda guardado");
 	});
 
 	await step("tras recargar se conservan las preferencias y se vuelve a pedir el PIN", async () => {
@@ -635,6 +648,10 @@ try {
 		await page.getByText(/^Ronda 1 de 10/u).waitFor();
 		await page.locator(".play-clock").waitFor();
 		assert.match(await page.locator(".play-target").textContent(), /^[A-Z]+$/u, "solo la palabra desordenada");
+		const oscillatorsBefore = await page.evaluate(() => window.__oscillators);
+		await page.waitForTimeout(1200);
+		const oscillatorsAfter = await page.evaluate(() => window.__oscillators);
+		assert.ok(oscillatorsAfter > oscillatorsBefore, "la música de pregunta debe seguir generando notas mientras corre el reloj");
 		await page.getByRole("button", { name: "Pista 1", exact: true }).click();
 		await page.locator(".play-hints li").first().waitFor();
 		await page.getByRole("button", { name: "Descubrir una letra", exact: true }).click();

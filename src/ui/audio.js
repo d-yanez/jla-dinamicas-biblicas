@@ -114,7 +114,7 @@ export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {
 	}
 
 	function startMusic(kind) {
-		if (!kind || musicOff(kind)) {
+		if (!kind || !musicAllowed(kind)) {
 			stopMusic();
 			return;
 		}
@@ -134,10 +134,12 @@ export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {
 		music = undefined;
 	}
 
-	let musicOff = () => false;
+	// "Allowed", not "off": the play screen answers "is this loop enabled?", and the engine
+	// stays free of preferences. An inverted reading of this silence every loop.
+	let musicAllowed = () => true;
 	/** The play screen decides per kind, so the engine stays free of preferences. */
 	function setMusicGate(gate) {
-		musicOff = typeof gate === "function" ? gate : () => false;
+		musicAllowed = typeof gate === "function" ? gate : () => true;
 	}
 
 	/** Three rising beeps for the countdown, the last one resolving into a bell. */
