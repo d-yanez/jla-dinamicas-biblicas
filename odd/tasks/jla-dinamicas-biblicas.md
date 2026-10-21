@@ -473,3 +473,15 @@ Evidencia: 184/184 unitarias (5 de versiones); 51/51 de navegador, incluido «al
 Corrección de proceso y de herramienta: `scripts/check-deployed.mjs` ahora consulta la API de **builds** de Pages (no la de deployments) e informa `building`, `errored` o `built <sha>`, fallando mientras el build está en curso. Después del build: `version.json` → 200 y 51/51 contra el sitio publicado.
 
 Regla operativa: antes de correr el smoke contra la URL pública, esperar `built <sha-de-HEAD>`; el deploy «existe» mucho antes de que el sitio lo sirva.
+
+**L40** — Reporte: «actualicé palabras del anagrama, guardé, publiqué y al jugar veo las antiguas».
+
+Se reprodujo el flujo completo en un navegador limpio (publicar → reabrir, que crea borrador → cambiar el anagrama → guardar → publicar → jugar) y **funciona**: la base publicada queda con el anagrama nuevo y la proyección muestra el nuevo. O sea que el mecanismo de borrador y reemplazo está bien.
+
+Causa probable del reporte: la publicación fue **rechazada por la validación** y los errores se dibujaban al final de un formulario largo, fáciles de no ver. El caso típico es editar la **solución** y no el **anagrama**: lo que se proyecta es el anagrama, y si cambia la solución sin regenerarlo las letras dejan de coincidir, así que la app —correctamente— no publica.
+
+Corrección: cuando la publicación se rechaza, ahora se abre un **diálogo «No se pudo publicar»** con la lista de problemas y la aclaración de que nada de lo publicado cambió. Imposible de ignorar.
+
+Otras dos causas posibles que se documentan para el usuario: una pantalla de juego abierta en otra pestaña conserva la actividad que cargó al montarse (hay que recargarla), y la lista puede mostrar la publicada **y** su borrador: lo que se edita es el borrador, publicar reemplaza la publicada.
+
+Evidencia: 184/184 unitarias; 52/52 de navegador, incluida la verificación nueva «publicar con un anagrama inválido explica el problema en un diálogo».

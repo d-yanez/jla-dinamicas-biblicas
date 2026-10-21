@@ -421,6 +421,18 @@ try {
 		assert.equal(await page.locator('.word-row__status[data-ok="true"]').count(), 13);
 	});
 
+	await step("publicar con un anagrama inválido explica el problema en un diálogo", async () => {
+		await page.getByLabel(/^Anagrama 1$/u).fill("ORACIONX");
+		await page.getByRole("button", { name: "Publicar", exact: true }).click();
+		await page.locator("dialog").getByRole("button", { name: "Publicar", exact: true }).click();
+		await page.getByRole("heading", { name: "No se pudo publicar" }).waitFor({ timeout: 5000 });
+		assert.match(await page.locator("dialog").innerText(), /mismas letras/u, "el diálogo dice qué arreglar");
+		await page.locator("dialog").getByRole("button", { name: "Revisar", exact: true }).click();
+		await settle();
+		await page.getByRole("button", { name: "Regenerar anagrama 1", exact: true }).click();
+		await page.locator('.word-row__status[data-ok="true"]').first().waitFor();
+	});
+
 	await step("los requisitos de palabras desordenadas se verifican", async () => {
 		await page.getByRole("button", { name: "Verificar requisitos" }).click();
 		await page.getByText("La actividad cumple todos los requisitos", { exact: false }).waitFor();

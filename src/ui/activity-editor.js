@@ -4,7 +4,7 @@
 
 import { ACTIVITY_STATUS, ROUND_SECONDS } from "../core/activity-model.js";
 import { defaultInstructionsFor, renderInstructions } from "../core/instructions.js";
-import { confirmDialog } from "./common.js";
+import { confirmDialog, createDialog } from "./common.js";
 import { clear, el, uniqueId } from "./dom.js";
 import { createDraftSession } from "./draft-session.js";
 import { formatDateTime } from "./format.js";
@@ -179,6 +179,21 @@ export function mountActivityEditor({ db, type, renderGame }) {
 		);
 	}
 
+	/** A refused publication must be impossible to miss: the errors open in a dialog. */
+	function showPublishErrors(errors) {
+		const sheet = createDialog("No se pudo publicar");
+		sheet.content.append(
+			el("p", {}, "La actividad tiene estos problemas y por eso no se publicó. Nada de lo que ya estaba publicado cambió."),
+			el("ul", { class: "review-list" }, ...(errors ?? []).map((error) => el("li", { class: "review-item" }, error.message))),
+			el(
+				"div",
+				{ class: "jla-dialog__actions" },
+				el("button", { class: "btn btn--primary", type: "button", onclick: () => sheet.close() }, "Revisar"),
+			),
+		);
+		sheet.open();
+	}
+
 	async function publish() {
 		const confirmed = await confirmDialog({
 			title: "Publicar esta actividad",
@@ -188,7 +203,8 @@ export function mountActivityEditor({ db, type, renderGame }) {
 			cancelLabel: "Cancelar",
 		});
 		if (!confirmed) return;
-		await session.publish();
+		const result = await session.publish();
+		if (!result?.ok) showPublishErrors(result?.errors);
 	}
 
 	async function unpublish() {
