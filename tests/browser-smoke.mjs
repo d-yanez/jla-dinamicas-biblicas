@@ -169,6 +169,15 @@ try {
 		assert.equal(await page.locator("html").getAttribute("data-contrast"), "alto");
 	});
 
+	await step("el sonido se configura desde el panel de administración", async () => {
+		await page.getByRole("heading", { name: "Sonido", exact: true }).waitFor();
+		const music = page.getByLabel("Música mientras responden");
+		await music.uncheck();
+		await page.waitForTimeout(200);
+		const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("jla.prefs") ?? "null"));
+		assert.equal(stored?.soundQuestion, false, "el interruptor de música queda guardado");
+	});
+
 	await step("tras recargar se conservan las preferencias y se vuelve a pedir el PIN", async () => {
 		await page.reload();
 		await page.getByRole("heading", { name: "Panel de administración" }).waitFor();
@@ -622,6 +631,7 @@ try {
 
 	await step("la ronda proyecta el anagrama, el reloj y las pistas a demanda", async () => {
 		await page.getByRole("button", { name: "Mostrar palabra" }).click();
+		await page.locator(".play-countdown").waitFor({ timeout: 3000 });
 		await page.getByText(/^Ronda 1 de 10/u).waitFor();
 		await page.locator(".play-clock").waitFor();
 		assert.match(await page.locator(".play-target").textContent(), /^[A-Z]+$/u, "solo la palabra desordenada");

@@ -130,6 +130,12 @@ function renderSoundGroup({ prefs, onChange }) {
 		if (cue === "bell") engine.bell("start");
 		else if (cue === "tick") engine.tick(4);
 		else if (cue === "reveal") engine.reveal();
+		else if (cue === "countdown") engine.beep(3);
+		else if (cue === "closing") engine.playClosing();
+		else if (cue === "lobby" || cue === "question") {
+			engine.startMusic(cue);
+			window.setTimeout(() => engine.stopMusic(), 2600);
+		}
 	};
 	const volume = el("input", { type: "range", min: "0", max: "100", step: "5", value: String(Math.round(prefs.soundVolume * 100)), "aria-label": "Volumen del sonido" });
 	volume.addEventListener("input", () => {
@@ -141,9 +147,13 @@ function renderSoundGroup({ prefs, onChange }) {
 	muted.addEventListener("change", () => onChange({ muted: muted.checked }));
 
 	const stages = [
-		["soundBell", "Campana al empezar y al terminar", "bell", "Campana"],
-		["soundTicks", "Tic en los últimos cinco segundos", "tick", "Tic"],
-		["soundReveal", "Sonido al revelar una solución", "reveal", "Revelación"],
+		["soundLobby", "Música de espera en la introducción", "lobby", "música"],
+		["soundQuestion", "Música mientras responden", "question", "música"],
+		["soundCountdown", "Cuenta regresiva 3 · 2 · 1", "countdown", "cuenta"],
+		["soundBell", "Campana al empezar y al terminar", "bell", "campana"],
+		["soundTicks", "Tic en los últimos cinco segundos", "tick", "tic"],
+		["soundReveal", "Sonido al revelar una solución", "reveal", "revelación"],
+		["soundClosing", "Acorde de cierre", "closing", "cierre"],
 	];
 	const rows = stages.map(([key, label, cue, action]) => {
 		const input = el("input", { type: "checkbox", id: `sonido-${key}`, checked: prefs[key] !== false });
@@ -152,7 +162,7 @@ function renderSoundGroup({ prefs, onChange }) {
 			"div",
 			{ class: "setting-row" },
 			el("label", { class: "setting-row__text", for: `sonido-${key}` }, el("span", { class: "setting-row__label" }, label)),
-			el("div", { class: "row" }, input, el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => test(cue) }, `Probar ${action.toLowerCase()}`)),
+			el("div", { class: "row" }, input, el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => test(cue) }, `Probar ${action}`)),
 		);
 	});
 

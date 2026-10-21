@@ -13,6 +13,10 @@ export const DEFAULT_PREFS = Object.freeze({
 	soundTicks: true,
 	soundBell: true,
 	soundReveal: true,
+	soundLobby: true,
+	soundQuestion: true,
+	soundCountdown: true,
+	soundClosing: true,
 });
 
 /**
@@ -38,6 +42,10 @@ export function normalizePrefs(value) {
 		soundTicks: flag("soundTicks"),
 		soundBell: flag("soundBell"),
 		soundReveal: flag("soundReveal"),
+		soundLobby: flag("soundLobby"),
+		soundQuestion: flag("soundQuestion"),
+		soundCountdown: flag("soundCountdown"),
+		soundClosing: flag("soundClosing"),
 	};
 }
 

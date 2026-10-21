@@ -393,3 +393,14 @@ Evidencia: 158/158 unitarias; `node tests/browser-smoke.mjs` → 47/47 (nueva ve
 4. **Configuración de sonido en Administración**: nueva sección «Sonido» en Configuración general con volumen, silencio total y un interruptor por etapa (campana, tic, revelación), cada una con su botón «Probar». Todo sintetizado y persistido; la ayuda del juego mantiene volumen y silencio para el momento de jugar.
 
 Evidencia: 157/157 unitarias; `node tests/browser-smoke.mjs` → 47/47.
+
+**L32** — Música y cuenta regresiva, según lo elegido por el usuario.
+
+- **Música sintetizada** con un secuenciador WebAudio (arpegio + bajo, sin archivos ni licencias): **lobby** en la introducción (84 BPM, suave), **pregunta** mientras responden (126 BPM, electrónica simple sin voces) y un **acorde de cierre** en «Gracias por participar». Un solo bucle vivo a la vez, elegido por la etapa; se corta en pausa de presentación, revisión y al salir.
+- **Cuenta regresiva 3 · 2 · 1** con beeps ascendentes y campana al llegar a cero; la primera ronda arranca sola. Dos segundos que ordenan el inicio y crean expectativa.
+- **Panel de sonido en Administración** ampliado a siete interruptores (música de espera, música de pregunta, cuenta regresiva, campana, tic, revelación, cierre) más volumen y silencio, cada uno con su botón **Probar**. La ayuda del juego mantiene volumen y silencio para el momento.
+- Descartado explícitamente del set tipo Kahoot: respuesta correcta/incorrecta, marcador y podio, porque no hay puntaje digital (las parejas escriben en papel y el moderador evalúa).
+
+**Bug encontrado y corregido**: `startMusic` llamaba a `prefsMusicOff`, un nombre que nunca existió (debía ser `musicOff`), y eso lanzaba `ReferenceError` al montar la pantalla de juego, que quedaba en «No se pudo continuar». Lo encontró el smoke al esperar un botón que nunca aparecía; un log temporal en el `catch` de `render` dio el stack exacto, y se retiró después. Lección: el `renderError` genérico oculta el stack; para depurar, un log temporal en el catch es más rápido que adivinar.
+
+Evidencia: 157/157 unitarias; `node tests/browser-smoke.mjs` → 48/48 (cuenta regresiva visible e interruptor de música persistido).

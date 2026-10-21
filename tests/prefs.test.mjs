@@ -12,6 +12,10 @@ test("las preferencias por defecto son Grande sin alto contraste", () => {
 		soundTicks: true,
 		soundBell: true,
 		soundReveal: true,
+		soundLobby: true,
+		soundQuestion: true,
+		soundCountdown: true,
+		soundClosing: true,
 	});
 	assert.deepEqual(DISPLAY_SIZES, ["normal", "grande"]);
 	assert.equal(Object.isFrozen(DEFAULT_PREFS), true);

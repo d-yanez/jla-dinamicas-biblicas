@@ -19,10 +19,12 @@ const CLOCK_INTERVAL_MS = 100;
 export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 	const root = el("div", { class: "play" });
 	const audio = createAudioEngine({ volume: prefs?.soundVolume, muted: prefs?.muted });
+	// The engine stays free of preferences: the screen decides which loop may play.
+	audio.setMusicGate((kind) => (kind === "lobby" ? prefs?.soundLobby !== false : prefs?.soundQuestion !== false));
 	let session = createRoundSession({ roundSeconds: activity.roundSeconds });
 	const words = activity.game.words ?? [];
 	const variant = (activity.game.variants ?? []).find((candidate) => candidate.id === activity.game.approvedVariantId);
-	const state = { pauseOverlay: false, discoveries: {} };
+	const state = { pauseOverlay: false, discoveries: {}, countdown: 0, closingPlayed: false };
 
 	let clockNode;
 	let timer;
@@ -397,11 +399,7 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 			el(
 				"div",
 				{ class: "play-controls" },
-				el(
-					"button",
-					{ class: "btn btn--primary btn--big", type: "button", onclick: () => run(() => session.start(nowMs())) },
-					"Mostrar palabra",
-				),
+				el("button", { class: "btn btn--primary btn--big", type: "button", onclick: () => startWithCountdown() }, "Mostrar palabra"),
 				el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => openHelp() }, "Ayuda (?)"),
 				el("a", { class: "btn btn--ghost btn--small", href: "#/" }, "Volver al inicio"),
 			),
@@ -593,6 +591,8 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 		session = createRoundSession({ roundSeconds: activity.roundSeconds });
 		state.discoveries = {};
 		state.pauseOverlay = false;
+		state.countdown = 0;
+		state.closingPlayed = false;
 		render();
 	}
 
@@ -607,10 +607,60 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 		);
 	}
 
+	/** Keeps exactly one loop alive, chosen by the stage. */
+	function syncMusic(current) {
+		if (state.pauseOverlay || state.countdown > 0) {
+			audio.stopMusic();
+			return;
+		}
+		if (current.stage === PLAY_STAGE.INTRO) audio.startMusic("lobby");
+		else if (current.stage === PLAY_STAGE.ROUND || current.stage === PLAY_STAGE.EXTRA) audio.startMusic("question");
+		else audio.stopMusic();
+		if (current.stage === PLAY_STAGE.THANKS && !state.closingPlayed) {
+			state.closingPlayed = true;
+			if (prefs?.soundClosing !== false) audio.playClosing();
+		}
+	}
+
+	/** 3 · 2 · 1 on screen and in sound, then the first round starts by itself. */
+	function startWithCountdown() {
+		audio.unlock();
+		if (prefs?.soundCountdown === false) {
+			run(() => session.start(nowMs()));
+			return;
+		}
+		const step = (value) => {
+			if (value <= 0) {
+				state.countdown = 0;
+				audio.bell("start");
+				run(() => session.start(nowMs()));
+				return;
+			}
+			state.countdown = value;
+			audio.beep(value);
+			render();
+			window.setTimeout(() => step(value - 1), 700);
+		};
+		step(3);
+	}
+
 	function render() {
 		clear(root);
 		const current = snapshot();
+		if (state.countdown > 0) {
+			syncMusic(current);
+			root.append(
+				el(
+					"section",
+					{ class: "play-stage play-stage--center" },
+					el("p", { class: "play-eyebrow" }, "Preparados"),
+					el("p", { class: "play-countdown", "aria-live": "assertive" }, String(state.countdown)),
+				),
+			);
+			return;
+		}
 		if (state.pauseOverlay) {
+			syncMusic(current);
 			root.append(pauseOverlay());
 			return;
 		}
@@ -619,6 +669,7 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 		else if (current.stage === PLAY_STAGE.REVIEW) root.append(renderReview(current));
 		else if (current.stage === PLAY_STAGE.REFLECTION) root.append(renderReflection());
 		else root.append(renderThanks());
+		syncMusic(current);
 	}
 
 	window.addEventListener("keydown", onKeyDown);
