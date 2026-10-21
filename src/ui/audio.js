@@ -70,9 +70,9 @@ export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {
 		tensionGain = ctx.createGain();
 		const filter = ctx.createBiquadFilter();
 		tension.type = "sawtooth";
-		tension.frequency.value = 55;
+		tension.frequency.value = 70;
 		filter.type = "lowpass";
-		filter.frequency.value = 240;
+		filter.frequency.value = 320;
 		tensionGain.gain.value = 0.0001;
 		tension.connect(filter);
 		filter.connect(tensionGain);
@@ -86,8 +86,10 @@ export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {
 		const target = Math.min(1, Math.max(0, Number(level) || 0));
 		const at = context.currentTime;
 		tensionGain.gain.cancelScheduledValues(at);
-		tensionGain.gain.setTargetAtTime(target === 0 ? 0.0001 : 0.02 + target * 0.06, at, 0.12);
-		tension.frequency.setTargetAtTime(55 + target * 25, at, 0.2);
+		// Audible from the first second of the round: this is the "background while the
+		// clock runs" the moderator asked for, and it grows in the last ten seconds.
+		tensionGain.gain.setTargetAtTime(0.06 + target * 0.14, at, 0.12);
+		tension.frequency.setTargetAtTime(70 + target * 30, at, 0.2);
 	}
 
 	function stopTension() {

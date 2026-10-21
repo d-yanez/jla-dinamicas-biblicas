@@ -5,7 +5,15 @@ export const DISPLAY_SIZES = Object.freeze(["normal", "grande"]);
 export const CONTRAST_MODES = Object.freeze(["jla", "alto"]);
 export const PREFS_STORAGE_KEY = "jla.prefs";
 
-export const DEFAULT_PREFS = Object.freeze({ displaySize: "grande", highContrast: false, soundVolume: 0.3, muted: false });
+export const DEFAULT_PREFS = Object.freeze({
+	displaySize: "grande",
+	highContrast: false,
+	soundVolume: 0.3,
+	muted: false,
+	soundTension: true,
+	soundTicks: true,
+	soundBell: true,
+});
 
 /**
  * Always returns a usable preference object. Stored values are untrusted: an
@@ -21,7 +29,16 @@ export function normalizePrefs(value) {
 		? Math.round(volumeRaw * 100) / 100
 		: DEFAULT_PREFS.soundVolume;
 	const muted = typeof source.muted === "boolean" ? source.muted : DEFAULT_PREFS.muted;
-	return { displaySize, highContrast, soundVolume, muted };
+	const flag = (key) => (typeof source[key] === "boolean" ? source[key] : DEFAULT_PREFS[key]);
+	return {
+		displaySize,
+		highContrast,
+		soundVolume,
+		muted,
+		soundTension: flag("soundTension"),
+		soundTicks: flag("soundTicks"),
+		soundBell: flag("soundBell"),
+	};
 }
 
 /**

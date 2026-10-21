@@ -616,6 +616,17 @@ try {
 		await page.getByText(/^Ronda 1 de 10/u).waitFor();
 	});
 
+	await step("las etapas del sonido se configuran y quedan guardadas", async () => {
+		await page.getByRole("button", { name: "Ayuda (?)", exact: true }).click();
+		const ticks = page.getByLabel("Tic en los últimos cinco segundos");
+		await ticks.waitFor();
+		await ticks.uncheck();
+		await page.locator("dialog").getByRole("button", { name: "Cerrar", exact: true }).click();
+		const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("jla.prefs") ?? "null"));
+		assert.equal(stored?.soundTicks, false, "el interruptor de tic queda guardado");
+		await page.getByRole("button", { name: "Reanudar", exact: true }).click();
+	});
+
 	await step("el extra de 60 segundos se inicia a mano tras la décima ronda", async () => {
 		await settle();
 		for (let index = 0; index < 9; index += 1) {
@@ -631,6 +642,7 @@ try {
 		await page.getByRole("button", { name: "Revisar soluciones", exact: true }).click();
 		await page.locator("dialog").getByRole("button", { name: "Mostrar soluciones" }).click();
 		await page.getByText("Reveladas 0 de 10").waitFor();
+		await page.getByText("Todavía no hay ninguna solución a la vista", { exact: false }).waitFor();
 		await page.getByRole("button", { name: /Revelar siguiente/u }).click();
 		await page.getByText("Reveladas 1 de 10").waitFor();
 		await settle();

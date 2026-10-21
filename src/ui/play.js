@@ -7,10 +7,11 @@ import { computeReveals, normalizeSolution } from "../core/anagram.js";
 import { planForEvent, tensionLevel } from "../core/audio-plan.js";
 import { renderInstructions } from "../core/instructions.js";
 import { PLAY_EVENT, PLAY_STAGE, createRoundSession, formatClock } from "../core/rounds.js";
+import { directionById, pathCells } from "../core/sopa.js";
 import { createAudioEngine } from "./audio.js";
 import { confirmDialog, createDialog } from "./common.js";
 import { clear, el } from "./dom.js";
-import { renderSopaGrid, solutionHighlights, solutionRows } from "./grid.js";
+import { renderSopaGrid } from "./grid.js";
 
 const GAME_LABELS = Object.freeze({ sopa: "Sopa de letras", palabras: "Palabras desordenadas" });
 const CLOCK_INTERVAL_MS = 100;
@@ -38,8 +39,14 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 		audio.dispose();
 	}
 
+	function soundEnabled(item) {
+		if (item.sound === "tick") return prefs?.soundTicks !== false;
+		if (item.sound === "bell") return prefs?.soundBell !== false;
+		return true;
+	}
+
 	function applyEvents(events) {
-		audio.play((events ?? []).flatMap((event) => planForEvent(event)));
+		audio.play((events ?? []).flatMap((event) => planForEvent(event)).filter(soundEnabled));
 	}
 
 	function run(action) {
@@ -54,11 +61,11 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 	function updateClock() {
 		const current = snapshot();
 		if (clockNode?.isConnected) clockNode.textContent = formatClock(current.remainingMs);
-		if (current.running) {
+		if (current.running && prefs?.soundTension !== false) {
 			audio.startTension();
 			audio.setTension(tensionLevel(current));
 		} else {
-			audio.setTension(0);
+			audio.stopTension();
 		}
 	}
 
@@ -176,7 +183,7 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 	async function toggleFullscreen() {
 		try {
 			if (document.fullscreenElement) await document.exitFullscreen();
-			else await document.documentElement.requestFullscreen?.();
+			else await root.requestFullscreen?.();
 		} catch {
 			/* the browser can refuse; Esc and F5 still work */
 		}
@@ -231,9 +238,37 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 						"?: abrir esta ayuda (pausa el reloj)",
 					].map((line) => el("li", {}, line)),
 				),
-				el("div", { class: "field" }, el("label", { class: "field__label", for: "volumen" }, "Volumen"), volume),
+				el("div", { class: "field" }, el("label", { class: "field__label", htmlFor: "volumen" }, "Volumen"), volume),
 				el("div", { class: "row" }, muteButton),
+				el(
+					"fieldset",
+					{ class: "sound-stages" },
+					el("legend", { class: "field__label" }, "Etapas del sonido"),
+					...[
+						["soundTension", "Tensión de fondo mientras corre el reloj"],
+						["soundTicks", "Tic en los últimos cinco segundos"],
+						["soundBell", "Campana al empezar y al terminar"],
+					].map(([key, label]) => {
+						const input = el("input", {
+							type: "checkbox",
+							id: `sonido-${key}`,
+							checked: prefs?.[key] !== false,
+						});
+						input.addEventListener("change", () => onPrefsChange?.({ [key]: input.checked }));
+						return el(
+							"label",
+							{ class: "sound-stages__row", for: `sonido-${key}` },
+							input,
+							el("span", {}, label),
+						);
+					}),
+				),
 				el("p", { class: "field__hint" }, "Cerrar la ayuda deja el reloj en pausa: reanudá cuando quieras."),
+				el(
+					"div",
+					{ class: "jla-dialog__actions" },
+					el("button", { class: "btn btn--primary", type: "button", onclick: () => sheet.close() }, "Cerrar"),
+				),
 			),
 		);
 		sheet.dialog.addEventListener("close", () => {
@@ -298,6 +333,37 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 	}
 
 	// ------------------------------------------------------------------- views
+
+	/** Answers in round order: the moderator reviews in the same sequence as the game. */
+	function reviewEntries() {
+		return words.map((word, index) => {
+			const placement = (variant?.placements ?? []).find((candidate) => candidate.wordId === word.id);
+			return {
+				index,
+				word,
+				placement,
+				direction: placement ? (directionById(placement.direction)?.label ?? placement.direction) : "",
+			};
+		});
+	}
+
+	function reviewHighlights(current) {
+		const highlights = new Map();
+		if (!variant) return highlights;
+		reviewEntries()
+			.slice(0, current.review.watermark)
+			.forEach((entry, order) => {
+				if (!entry.placement) return;
+				const cells = pathCells({
+					size: variant.size,
+					start: entry.placement.start,
+					directionId: entry.placement.direction,
+					length: entry.placement.normalized.length,
+				});
+				for (const index of cells ?? []) highlights.set(index, { order, word: entry.placement.normalized });
+			});
+		return highlights;
+	}
 
 	function clockBlock(current) {
 		clockNode = el("div", { class: "play-clock", "aria-live": "off" }, formatClock(current.remainingMs));
@@ -424,75 +490,72 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 	}
 
 	function renderReview(current) {
-		const stage = el(
-			"section",
-			{ class: "play-stage" },
-			el("p", { class: "play-eyebrow" }, "Revisión de soluciones"),
-			el("h2", { class: "play-title" }, `Reveladas ${current.review.cursor} de ${current.reviewCount}`),
+		const entries = reviewEntries();
+		const revealed = entries.slice(0, current.review.watermark);
+		const nothingRevealed = current.review.cursor === 0;
+
+		const visual =
+			game === "sopa" && variant
+				? el(
+						"div",
+						{ class: "grid-scroll" },
+						renderSopaGrid({
+							variant,
+							highlights: reviewHighlights(current),
+							label: "Cuadrícula con las soluciones reveladas",
+						}),
+					)
+				: el(
+						"div",
+						{ class: "play-review__fallback" },
+						el("p", { class: "field__hint" }, "En este juego las soluciones se revisan en la lista de la derecha."),
+					);
+
+		const answers = el(
+			"ol",
+			{ class: "review-list" },
+			...revealed.map((entry, index) =>
+				el(
+					"li",
+					{ class: index < current.review.cursor ? "review-item" : "review-item review-item--pending" },
+					el("span", { class: "review-item__index" }, String(index + 1)),
+					el("span", { class: "review-item__solution" }, entry.word?.solution ?? entry.word?.text ?? ""),
+					game === "sopa"
+						? el("span", { class: "review-item__detail" }, `${entry.direction} · fila ${(entry.placement?.start?.row ?? 0) + 1}, columna ${(entry.placement?.start?.col ?? 0) + 1}`)
+						: el("span", { class: "review-item__detail" }, entry.word?.anagram ?? ""),
+				),
+			),
 		);
 
-		if (game === "sopa" && variant) {
-			stage.append(
+		return el(
+			"section",
+			{ class: "play-stage play-review" },
+			el(
+				"div",
+				{ class: "play-review__visual" },
 				el(
 					"div",
-					{ class: "grid-scroll" },
-					renderSopaGrid({
-						variant,
-						highlights: solutionHighlights(variant, current.review.watermark),
-						label: "Cuadrícula con las soluciones reveladas",
-					}),
+					{ class: "play-review__head" },
+					el("p", { class: "play-eyebrow" }, "Revisión de soluciones"),
+					el("h2", { class: "play-title play-review__counter" }, `Reveladas ${current.review.cursor} de ${current.reviewCount}`),
 				),
-			);
-			const rows = solutionRows(variant, words).slice(0, current.review.watermark);
-			if (rows.length > 0) {
-				stage.append(
-					el(
-						"div",
-						{ class: "table-scroll" },
-						el(
-							"table",
-							{ class: "solution-table" },
-							el("thead", {}, el("tr", {}, ...["#", "Palabra", "Dirección", "Inicio", "Fin"].map((heading) => el("th", { scope: "col" }, heading)))),
-							el(
-								"tbody",
-								{},
-								...rows.map((row, index) =>
-									el(
-										"tr",
-										{ class: index < current.review.cursor ? "solution-row" : "solution-row solution-row--pending" },
-										el("td", {}, String(row.index + 1)),
-										el("td", {}, row.text),
-										el("td", {}, row.direction),
-										el("td", {}, row.start),
-										el("td", {}, row.end),
-									),
-								),
-							),
-						),
-					),
-				);
-			}
-		} else {
-			const revealed = words.slice(0, current.review.watermark);
-			stage.append(
-				el(
-					"ol",
-					{ class: "review-list" },
-					...revealed.map((word, index) =>
-						el(
-							"li",
-							{ class: index < current.review.cursor ? "review-item" : "review-item review-item--pending" },
-							el("span", { class: "review-item__index" }, String(index + 1)),
-							el("span", { class: "review-item__solution" }, word.solution),
-							el("span", { class: "field__hint" }, `(${word.anagram})`),
-						),
-					),
-				),
-			);
-		}
-
-		stage.append(buildControls(current));
-		return stage;
+				nothingRevealed
+					? el(
+							"p",
+							{ class: "play-review__empty", role: "status" },
+							"Todavía no hay ninguna solución a la vista. Usá «Revelar siguiente» para mostrar la primera; las respuestas se revelan de a una, a propósito.",
+						)
+					: undefined,
+				visual,
+			),
+			el(
+				"aside",
+				{ class: "play-review__answers" },
+				el("p", { class: "field__hint" }, "Soluciones reveladas"),
+				revealed.length > 0 ? answers : undefined,
+				buildControls(current),
+			),
+		);
 	}
 
 	function renderReflection() {

@@ -364,3 +364,14 @@ Evidencia: 132/132 unitarias; `node tests/browser-smoke.mjs` → 37/37 (nueva ve
 **L28** — El smoke destapó un problema de **pérdida de datos**: al editar una palabra se descartaban las variantes, así que corregir un error de tipeo y volver atrás dejaba la actividad sin cuadrícula aprobada y sin forma de recuperarla salvo regenerar. Contradice el principio del documento («priorizar la preservación de datos»). Corregido: al cambiar palabras se **conservan** las variantes que siguen verificando y solo se **retira la aprobación** cuando la cuadrícula ya no cubre las palabras. Un ida y vuelta de la palabra devuelve la misma cuadrícula (mismo id) y basta aprobarla otra vez. El aviso pasó de «las variantes se descartaron» a «la aprobación se retiró porque la cuadrícula ya no coincide».
 
 Evidencia de fase 4: `node --test tests/*.test.mjs` → 157/157 (19 del motor de rondas, 4 del plan de audio, más las de preservación); `node tests/browser-smoke.mjs` → 45/45, con una sesión completa: publicar, jugar con pistas y descubrimientos, pausa, siguiente, retroceder, extra de 60 s, revisión secuencial con retroceso, reflexión y gracias, y la sopa con historial y cuadrícula coloreada.
+
+**L29** — Comentarios del usuario sobre la fase 4, resueltos en este incremento.
+
+1. **«Revelar y no aparece nada»**: la revisión funcionaba —la captura muestra 10 de 10 con colores y tabla— pero al entrar decía «Reveladas 0 de 10» con la cuadrícula sin pintar, y la primera solución aparecía recién con «Revelar siguiente». Era un problema de claridad, no de función. Se agregó un estado vacío explícito que explica que las respuestas se revelan de a una a propósito.
+2. **Scroll en la revisión**: la tabla quedaba debajo de la cuadrícula. Ahora la revisión es **dos columnas** (cuadrícula a la izquierda, soluciones y controles a la derecha) y se apila solo en pantallas angostas.
+3. **Orden de revisión**: las soluciones se listaban en el orden interno de las ubicaciones. Ahora van en **orden de ronda**, igual que el juego.
+4. **Tamaño de proyección**: cuadrícula, palabra objetivo y cronómetro escalan con la ventana; en sopa las celdas llegan a 3 rem. La pantalla completa ahora se pide sobre la propia pantalla de juego, no sobre toda la app.
+5. **Sonido de fondo**: la tensión sintetizada existía solo en los últimos 10 s y a un volumen casi inaudible. Ahora suena **desde el primer segundo** de la ronda y sube hacia el final.
+6. **Tres etapas de audio configurables**: fondo durante la ronda, tic de los últimos cinco segundos y campana de inicio/cierre, cada una con su interruptor en el panel de ayuda, persistidas en `prefs`.
+
+Evidencia: 158/158 unitarias (una nueva de los interruptores); `node tests/browser-smoke.mjs` → 46/46 (estado vacío de la revisión y configuración de las etapas de sonido).
