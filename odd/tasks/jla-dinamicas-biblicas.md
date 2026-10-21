@@ -467,3 +467,9 @@ Evidencia: 179/179 unitarias; 50/50 de navegador.
 3. **Revelado manual en palabras**: botón **«Acertaron: mostrar respuesta»** durante la ronda. Pausa el reloj y muestra la solución al instante, sin esperar `00:00` (que sigue mostrándola sola). La palabra siguiente limpia el estado y la música vuelve.
 
 Evidencia: 184/184 unitarias (5 de versiones); 51/51 de navegador, incluido «al acertar se pausa y se muestra la respuesta sin esperar el cero» y la versión en el pie.
+
+**L39** — La verificación contra Pages falló y no era la app: el build seguía en curso. La API de `deployments` ya informaba el commit nuevo (`782da24`) mientras el build de Pages estaba en `building`, así que el sitio servía la build anterior: `version.json` devolvía **404** y `app.js` era el viejo. El smoke lo detectó con la aserción del pie («el pie muestra la versión desplegada»), que es exactamente el tipo de señal que se quería tener.
+
+Corrección de proceso y de herramienta: `scripts/check-deployed.mjs` ahora consulta la API de **builds** de Pages (no la de deployments) e informa `building`, `errored` o `built <sha>`, fallando mientras el build está en curso. Después del build: `version.json` → 200 y 51/51 contra el sitio publicado.
+
+Regla operativa: antes de correr el smoke contra la URL pública, esperar `built <sha-de-HEAD>`; el deploy «existe» mucho antes de que el sitio lo sirva.
