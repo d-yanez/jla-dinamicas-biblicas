@@ -86,6 +86,28 @@ El PIN de cuatro dígitos evita que alguien que toma el dispositivo entre al pan
 - **Tres palabras de desempate** (Principal, Reserva 1 y Reserva 2) con respuesta y anagrama válidos: requisito para publicar, igual que las diez palabras.
 - **El anagrama se guarda y se muestra sin acentos**: mezclar `ORACIÓN` con sus tildes filtraría dónde va el acento.
 
+## Configuración inicial (opcional)
+
+Si querés que **un navegador sin datos** —la computadora de la iglesia, un perfil nuevo— abra la app con tus actividades ya cargadas, y sin pendrive:
+
+1. Configurá los dos juegos acá y publicá lo que querés que quede listo.
+2. **Administración → Configuración general → Datos y respaldo → Exportar respaldo**.
+3. Guardá ese archivo como `assets/configuracion-inicial.json` y commiteá el cambio.
+4. Verificá antes de publicar:
+
+```bash
+node scripts/validate-seed.mjs
+```
+
+Reglas del mecanismo:
+
+- Se aplica **solo a un navegador sin datos**. Nunca toca un equipo que ya tiene actividades.
+- Una actividad **publicada** en el archivo queda publicada (una por juego), así la iglesia abre y juega sin tocar nada. El resto entra como borrador.
+- Si el archivo no existe, la app usa los ejemplos de demostración.
+- El archivo **no contiene el PIN**: cada dispositivo tiene el suyo.
+
+El script solo valida: una línea de comandos no puede escribir el IndexedDB del navegador, así que la importación real ocurre en la app.
+
 ## Los datos
 
 Todo se guarda en **IndexedDB** (`jla-dinamicas`), con esquema versionado y migraciones incrementales.

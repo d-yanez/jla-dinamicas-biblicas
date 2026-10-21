@@ -1,0 +1,20 @@
+{
+  "kind": "jla.backup",
+  "version": 1,
+  "app": "JLA Dinámicas Bíblicas",
+  "exportedAt": "2026-10-21T00:00:00.000Z",
+  "settings": {
+    "displaySize": "grande",
+    "highContrast": false,
+    "soundVolume": 0.3,
+    "muted": false,
+    "soundTicks": true,
+    "soundBell": true,
+    "soundReveal": true,
+    "soundLobby": true,
+    "soundQuestion": true,
+    "soundCountdown": true,
+    "soundClosing": true
+  },
+  "activities": []
+}

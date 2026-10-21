@@ -417,3 +417,15 @@ Bugs encontrados por la verificación:
 2. La acción de importar hacía `render()`, así que el mensaje de resultado se escribía en un nodo ya reemplazado y no se veía. Ahora importar no re-renderiza: el panel escribe el resultado en su propia línea de estado.
 
 Evidencia: `node --test tests/*.test.mjs` → 168/168 (11 pruebas de respaldo); `node tests/browser-smoke.mjs` → 49/49 (exportación real, vista previa con la lista de actividades e importación de vuelta).
+
+**L34** — Configuración inicial empaquetada, pedida por el usuario: configurar una vez, exportar el JSON, dejarlo en el repo y que la computadora de la iglesia abra con todo cargado.
+
+- `assets/configuracion-inicial.json` es un **respaldo normal** (mismo formato que exporta la app). Se commitea y el navegador lo busca al arrancar.
+- `planSeed` (puro, en `seed.js`): **solo aplica a una base vacía**; conserva como publicada la que venga publicada en el archivo (una por juego), deja el resto como borrador y descarta las inválidas.
+- `applyBundledSeed(db)`: marca el intento en `bundledSeedAppliedAt`, no reintenta en cada arranque, y **«applied» significa «insertó algo»**: una semilla válida pero vacía cae a los ejemplos de demostración en vez de dejar al navegador sin nada.
+- `scripts/validate-seed.mjs`: valida formato, valida cada actividad con las mismas reglas del editor y comprueba que no haya dos publicadas del mismo juego; devuelve 1 si hay problemas, 0 si el archivo falta. Sirve para correr antes de publicar.
+- Un CLI **no puede importar** en el navegador (no hay backend: los datos viven en IndexedDB), así que el script valida y la importación ocurre en la app.
+
+Detalle de verificación: el 404 de un archivo opcional queda registrado como error de consola y el smoke exige consola limpia. Por eso se commitea una **semilla vacía válida** en lugar de no tener archivo: el pedido devuelve 200, no inserta nada y los ejemplos siguen apareciendo.
+
+Evidencia: `node --test tests/*.test.mjs` → 174/174 (6 de la semilla); `node tests/browser-smoke.mjs` → 49/49.

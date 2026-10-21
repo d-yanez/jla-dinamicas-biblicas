@@ -14,6 +14,7 @@ import {
 } from "./activity-model.js";
 import { buildBackup, mergeBackup, parseBackup } from "./backup.js";
 import { getAll, getRow, putRow, readSetting, removeRow, writeSetting } from "./db.js";
+import { SEED_MARKER_KEY, SEED_PATH, planSeed } from "./seed.js";
 import { createId } from "./ids.js";
 import { defaultInstructionsFor } from "./instructions.js";
 import { generateVariant } from "./sopa.js";
@@ -158,6 +159,47 @@ export async function importBackup(db, text) {
 	const { toInsert, summary } = mergeBackup({ existing, incoming: parsed.backup.activities, makeId: createId });
 	for (const activity of toInsert) await putRow(db, ACTIVITIES_STORE, activity);
 	return { ok: true, summary, settings: parsed.backup.settings, exportedAt: parsed.backup.exportedAt };
+}
+
+// --------------------------------------------------------------------- seed
+
+/**
+ * Applies the bundled configuration to a browser with no data.
+ *
+ * Returns what happened so the caller can fall back to the demo examples: a missing file
+ * (the normal case in a repository without a committed seed) is not an error.
+ */
+export async function applyBundledSeed(db, fetchImpl = globalThis.fetch) {
+	const marker = await readSetting(db, SEED_MARKER_KEY);
+	if (typeof marker === "string" && marker.length > 0) return { applied: false, reason: "marker" };
+	const existing = await listActivities(db);
+	if (existing.length > 0) {
+		await writeSetting(db, SEED_MARKER_KEY, new Date().toISOString());
+		return { applied: false, reason: "data" };
+	}
+	let text;
+	try {
+		const response = await fetchImpl(SEED_PATH, { cache: "no-store" });
+		if (!response.ok) {
+			await writeSetting(db, SEED_MARKER_KEY, new Date().toISOString());
+			return { applied: false, reason: "missing" };
+		}
+		text = await response.text();
+	} catch {
+		await writeSetting(db, SEED_MARKER_KEY, new Date().toISOString());
+		return { applied: false, reason: "missing" };
+	}
+	const parsed = parseBackup(text);
+	if (!parsed.ok) {
+		await writeSetting(db, SEED_MARKER_KEY, new Date().toISOString());
+		return { applied: false, reason: "invalid", error: parsed.error };
+	}
+	const { toInsert, published } = planSeed({ incoming: parsed.backup.activities, activities: existing, makeId: createId });
+	for (const activity of toInsert) await putRow(db, ACTIVITIES_STORE, activity);
+	await writeSetting(db, SEED_MARKER_KEY, new Date().toISOString());
+	// "Applied" means activities were inserted: a valid but empty seed must fall through to
+	// the demo examples instead of leaving a new browser with nothing to play.
+	return { applied: toInsert.length > 0, inserted: toInsert.length, published };
 }
 
 // ------------------------------------------------------------------- examples
