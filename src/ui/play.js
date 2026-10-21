@@ -84,8 +84,9 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 				applyEvents(events);
 				// When the word's time is over the answer appears right there: the group has to
 				// know what the word was, without waiting for a final review.
-				if (game === "palabras" && events.some((event) => event.type === PLAY_EVENT.TIME_UP)) {
-					state.answerFor = session.snapshot().roundIndex;
+				if (events.some((event) => event.type === PLAY_EVENT.TIME_UP)) {
+					// Palabras shows the answer here; the sopa only needs the loop to stop.
+					if (game === "palabras") state.answerFor = session.snapshot().roundIndex;
 					render();
 					return;
 				}
@@ -690,8 +691,12 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 			return;
 		}
 		if (current.stage === PLAY_STAGE.INTRO) audio.startMusic("lobby");
-		else if (current.stage === PLAY_STAGE.ROUND || current.stage === PLAY_STAGE.EXTRA) audio.startMusic("question");
-		else audio.stopMusic();
+		else if (current.stage === PLAY_STAGE.ROUND || current.stage === PLAY_STAGE.EXTRA) {
+			// The loop follows the clock: it stops at 00:00 (or on a manual pause) and comes
+			// back with the next word, instead of droning on over a stopped round.
+			if (current.running) audio.startMusic("question");
+			else audio.stopMusic();
+		} else audio.stopMusic();
 		if (current.stage === PLAY_STAGE.THANKS && !state.closingPlayed) {
 			state.closingPlayed = true;
 			if (prefs?.soundClosing !== false) audio.playClosing();

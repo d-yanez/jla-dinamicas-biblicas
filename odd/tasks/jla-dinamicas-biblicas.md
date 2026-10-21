@@ -448,3 +448,14 @@ Cómo se encontró: instrumentando WebAudio (`createOscillator` parcheado) en ve
 Corrección: la compuerta pasó a llamarse `musicAllowed` (por defecto `true`) y `startMusic` la consulta como «¿está permitida?». Se agregó además una **prueba de regresión en el smoke**: un init script cuenta osciladores reales y el paso de la ronda exige que el contador crezca mientras corre el reloj. El smoke también lanza el navegador con `--autoplay-policy=no-user-gesture-required`, y dejó de apagar «Música mientras responden» al probar la persistencia de interruptores: estaba silenciando justo lo que después verifica.
 
 Evidencia: 179/179 unitarias; 50/50 de navegador, ahora incluyendo «la música de pregunta debe seguir generando notas mientras corre el reloj».
+
+**L37** — Acotación del usuario: «la música de fondo se detiene cuando se termina el tiempo y se reanuda cuando se pasa a la siguiente palabra».
+
+Antes no era así: el bucle se elegía solo por **etapa**, así que seguía sonando sobre una ronda detenida. Ahora la música de pregunta **sigue al reloj**: corre mientras `running` es verdadero, se detiene en `00:00` (y en una pausa manual) y vuelve al pasar a la palabra siguiente. El evento `time-up` ahora vuelve a dibujar en los dos juegos: en palabras para mostrar la respuesta, en la sopa para que el bucle se corte.
+
+Verificado instrumentando WebAudio en una ronda de 10 s:
+- ronda corriendo (00:09): **+6 osciladores** en 1,2 s
+- tras `00:00` con la respuesta a la vista: **+0**
+- ronda 2 (00:09): **+7**
+
+Evidencia: 179/179 unitarias; 50/50 de navegador.
