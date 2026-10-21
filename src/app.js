@@ -4,7 +4,7 @@
 // storage knowledge and there is exactly one place that can mutate the PIN, the
 // recovery identity or the preferences.
 
-import { countPublishedActivities, ensureExampleActivities, fetchPublishedActivity } from "./core/activities.js";
+import { countPublishedActivities, ensureExampleActivities, exportBackup, fetchPublishedActivity, importBackup } from "./core/activities.js";
 import { ADMIN_ACCESS, canHonorVerification, createAdminGate, shouldOfferRecoveryFile } from "./core/admin-gate.js";
 import { openDatabase, readSetting, writeSetting } from "./core/db.js";
 import { createPinRecord, isPinRecord, normalizePin, verifyPin } from "./core/pin.js";
@@ -253,6 +253,18 @@ async function buildAdmin(route) {
 				void downloadRecovery().then(() => render());
 			},
 			useRecovery: handleUseRecovery,
+			exportBackup: async () => {
+				const backup = await exportBackup(state.db, state.prefs);
+				const day = new Date().toISOString().slice(0, 10);
+				downloadJson(`jla-respaldo-${day}.json`, backup);
+			},
+			importBackup: async (text) => {
+				const result = await importBackup(state.db, text);
+				if (result.ok && result.settings) persistPrefs(result.settings);
+				// No re-render here: the panel writes the result into its own status line, and a
+				// re-render would replace that node before the message lands.
+				return result;
+			},
 		},
 	});
 }

@@ -404,3 +404,16 @@ Evidencia: 157/157 unitarias; `node tests/browser-smoke.mjs` → 47/47.
 **Bug encontrado y corregido**: `startMusic` llamaba a `prefsMusicOff`, un nombre que nunca existió (debía ser `musicOff`), y eso lanzaba `ReferenceError` al montar la pantalla de juego, que quedaba en «No se pudo continuar». Lo encontró el smoke al esperar un botón que nunca aparecía; un log temporal en el `catch` de `render` dio el stack exacto, y se retiró después. Lección: el `renderError` genérico oculta el stack; para depurar, un log temporal en el catch es más rápido que adivinar.
 
 Evidencia: 157/157 unitarias; `node tests/browser-smoke.mjs` → 48/48 (cuenta regresiva visible e interruptor de música persistido).
+
+**L33** — Respaldo general adelantado de la fase 7, porque el usuario lo necesita para llevar el trabajo a la computadora de la iglesia.
+
+- `backup.js` (puro): `buildBackup` (actividades + configuración no sensible, **nunca el PIN ni el archivo de recuperación**), `parseBackup` (validación con errores específicos y límite de 5 MB), `mergeBackup` (todo entra como **borrador con id nuevo**, `originId`/`exampleKey` limpios, nombres repetidos renombrados con ` (importado)`, inválidas omitidas y contadas, la publicada local intacta) y `previewBackup` (qué trae el archivo, con tipo y estado de cada actividad).
+- Repositorio: `exportBackup(db, prefs)` e `importBackup(db, text)`.
+- Administración → Datos y respaldo: **Exportar respaldo** (descarga `jla-respaldo-AAAA-MM-DD.json`) e **Importar respaldo** con **vista previa** antes de escribir nada: fecha de exportación y la lista de actividades con su juego y estado, más un aviso si hay entradas inválidas.
+- El botón de recuperación del PIN pasó de «Importar» a **«Usar archivo»**: dos botones llamados «Importar» confundían al usuario y colisionaban en las pruebas.
+
+Bugs encontrados por la verificación:
+1. Un reemplazo mío en `security.js` dejó un paréntesis de más y rompió el módulo (lo detectó el test de importación de módulos).
+2. La acción de importar hacía `render()`, así que el mensaje de resultado se escribía en un nodo ya reemplazado y no se veía. Ahora importar no re-renderiza: el panel escribe el resultado en su propia línea de estado.
+
+Evidencia: `node --test tests/*.test.mjs` → 168/168 (11 pruebas de respaldo); `node tests/browser-smoke.mjs` → 49/49 (exportación real, vista previa con la lista de actividades e importación de vuelta).

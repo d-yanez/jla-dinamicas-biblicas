@@ -6,6 +6,10 @@ import { ADMIN_SECTIONS, SECTION_LABELS } from "../core/router.js";
 import { el } from "./dom.js";
 import { renderSecurityGroup } from "./security.js";
 import { createAudioEngine } from "./audio.js";
+import { confirmDialog, createDialog } from "./common.js";
+import { readFileText } from "./download.js";
+import { formatDateTime } from "./format.js";
+import { previewBackup } from "../core/backup.js";
 import { mountPalabrasSection } from "./palabras-admin.js";
 import { mountSopaSection } from "./sopa-admin.js";
 
@@ -187,7 +191,90 @@ function renderSoundGroup({ prefs, onChange }) {
 	);
 }
 
-function renderDataGroup() {
+function renderDataGroup({ actions }) {
+	const status = el("p", { class: "field__hint", role: "status" }, "");
+	const fileInput = el("input", { class: "input", type: "file", accept: ".json,application/json", "aria-label": "Archivo de respaldo" });
+	const importButton = el(
+		"button",
+		{
+			class: "btn btn--ghost btn--small",
+			type: "button",
+			onclick: async () => {
+				status.textContent = "";
+				const file = fileInput.files?.[0];
+				if (!file) {
+					status.textContent = "Elegí un archivo de respaldo (.json).";
+					return;
+				}
+				let text;
+				try {
+					text = await readFileText(file);
+				} catch {
+					status.textContent = "No se pudo leer el archivo.";
+					return;
+				}
+				const preview = previewBackup(text);
+				if (!preview.ok) {
+					status.textContent = preview.error;
+					return;
+				}
+				// Show what the file carries before writing anything: this is the work the
+				// moderator configured, not a different one.
+				const sheet = createDialog("Importar respaldo");
+				sheet.content.append(
+					el("p", {}, `${file.name}${preview.exportedAt ? ` · exportado el ${formatDateTime(preview.exportedAt)}` : ""}`),
+					el(
+						"ul",
+						{ class: "review-list" },
+						...preview.items.map((item) =>
+							el(
+								"li",
+								{ class: item.valid ? "review-item" : "review-item review-item--pending" },
+								el("span", { class: "review-item__solution" }, item.name),
+								el(
+									"span",
+									{ class: "review-item__detail" },
+									`${item.type === "sopa" ? "Sopa de letras" : item.type === "palabras" ? "Palabras desordenadas" : item.type} · ${item.status === "published" ? "publicada" : "borrador"}${item.valid ? "" : " · inválida"}`,
+								),
+							),
+						),
+					),
+					preview.invalid > 0
+						? el("p", { class: "notice notice--warn" }, `${preview.invalid} ${preview.invalid === 1 ? "entrada no es válida" : "entradas no son válidas"} y se van a omitir.`)
+						: undefined,
+					el("p", { class: "field__hint" }, "Se agregan como borradores. Nada de lo que ya tenés se sobrescribe y la actividad publicada de este equipo no cambia."),
+					el(
+						"div",
+						{ class: "jla-dialog__actions" },
+						el("button", { class: "btn btn--ghost", type: "button", onclick: () => sheet.close() }, "Cancelar"),
+						el(
+							"button",
+							{
+								class: "btn btn--primary",
+								type: "button",
+								onclick: async () => {
+									sheet.close();
+									const result = await actions.importBackup(text);
+									if (!result?.ok) {
+										status.textContent = result?.error ?? "El respaldo no se pudo importar.";
+										return;
+									}
+									const parts = [`Se importaron ${result.summary.added} actividades`];
+									if (result.summary.renamed > 0) parts.push(`${result.summary.renamed} renombradas para no repetir nombres`);
+									if (result.summary.skipped > 0) parts.push(`${result.summary.skipped} omitidas por inválidas`);
+									status.textContent = `${parts.join(", ")}. Las vas a encontrar en la lista como borradores.`;
+								},
+							},
+							"Importar",
+						),
+					),
+				);
+				sheet.open();
+			},
+		},
+		"Importar respaldo",
+	);
+
 	return el(
 		"section",
 		{ class: "settings-group", "aria-labelledby": "group-data" },
@@ -195,9 +282,31 @@ function renderDataGroup() {
 		el(
 			"p",
 			{ class: "notice notice--warn" },
-			"Los datos viven en este navegador. Si borrás los datos del navegador, usás una ventana privada o cambiás de dispositivo, se pierden.",
+			"Los datos viven en este navegador. Si borrás los datos del navegador, usás una ventana privada o cambiás de dispositivo, se pierden: por eso existe el respaldo.",
 		),
-		el("p", { class: "field__hint" }, "El respaldo en JSON, general y por juego, llega más adelante en el proyecto."),
+		el(
+			"div",
+			{ class: "setting-row" },
+			el(
+				"div",
+				{ class: "setting-row__text" },
+				el("span", { class: "setting-row__label" }, "Exportar respaldo"),
+				el("span", { class: "setting-row__hint" }, "Descarga un archivo JSON con todas las actividades y la configuración. El PIN nunca se incluye."),
+			),
+			el("button", { class: "btn btn--primary btn--small", type: "button", onclick: () => void actions.exportBackup() }, "Exportar respaldo"),
+		),
+		el(
+			"div",
+			{ class: "setting-row" },
+			el(
+				"div",
+				{ class: "setting-row__text" },
+				el("span", { class: "setting-row__label" }, "Importar respaldo"),
+				el("span", { class: "setting-row__hint" }, "Desde otro dispositivo. Todo lo importado entra como borrador; la publicada de este equipo no cambia."),
+			),
+			el("div", { class: "row" }, fileInput, importButton),
+		),
+		status,
 	);
 }
 
@@ -208,7 +317,7 @@ export function renderAdmin({ section, prefs, publishedCount = 0, downloaded = f
 			renderAppearanceGroup({ prefs, onChange: actions.changePrefs }),
 			renderSoundGroup({ prefs, onChange: actions.changePrefs }),
 			renderSecurityGroup({ downloaded, actions }),
-			renderDataGroup(),
+			renderDataGroup({ actions }),
 		];
 	} else if (section === "sopa" && db) {
 		content = [mountSopaSection({ db }).element];

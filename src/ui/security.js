@@ -51,11 +51,7 @@ export function renderSecurityGroup({ downloaded, actions }) {
 				el("span", { class: "setting-row__label" }, "Usar un archivo de recuperación"),
 				el("span", { class: "setting-row__hint" }, "Define un PIN nuevo sin tocar las actividades guardadas."),
 			),
-			el(
-				"button",
-				{ class: "btn btn--ghost btn--small", type: "button", onclick: actions.useRecovery },
-				"Importar",
-			),
+			el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: actions.useRecovery }, "Usar archivo"),
 		),
 		el(
 			"div",

@@ -12,6 +12,7 @@ import {
 	refreshDerivedState,
 	validateActivity,
 } from "./activity-model.js";
+import { buildBackup, mergeBackup, parseBackup } from "./backup.js";
 import { getAll, getRow, putRow, readSetting, removeRow, writeSetting } from "./db.js";
 import { createId } from "./ids.js";
 import { defaultInstructionsFor } from "./instructions.js";
@@ -136,6 +137,27 @@ export async function unpublishActivity(db, id) {
 	const unpublished = { ...activity, status: ACTIVITY_STATUS.DRAFT, publishedAt: "", updatedAt: new Date().toISOString() };
 	await putRow(db, ACTIVITIES_STORE, unpublished);
 	return unpublished;
+}
+
+// -------------------------------------------------------------------- backup
+
+/** Everything needed to move the work to another device. The PIN is never included. */
+export async function exportBackup(db, prefs) {
+	const activities = await listActivities(db);
+	return buildBackup({ activities, prefs });
+}
+
+/**
+ * Merges a backup file: every imported activity lands as a fresh draft, nothing on this
+ * device is overwritten and the published activity is never changed.
+ */
+export async function importBackup(db, text) {
+	const parsed = parseBackup(text);
+	if (!parsed.ok) return { ok: false, error: parsed.error };
+	const existing = await listActivities(db);
+	const { toInsert, summary } = mergeBackup({ existing, incoming: parsed.backup.activities, makeId: createId });
+	for (const activity of toInsert) await putRow(db, ACTIVITIES_STORE, activity);
+	return { ok: true, summary, settings: parsed.backup.settings, exportedAt: parsed.backup.exportedAt };
 }
 
 // ------------------------------------------------------------------- examples

@@ -209,7 +209,7 @@ try {
 		await page.getByRole("button", { name: "Entrar" }).click();
 		await page.getByRole("heading", { name: "Sopa de letras", exact: true }).waitFor();
 		await page.getByRole("link", { name: "Configuración general" }).click();
-		await page.getByRole("button", { name: "Importar" }).click();
+		await page.getByRole("button", { name: "Usar archivo", exact: true }).click();
 		await page.getByRole("heading", { name: "Archivo de recuperación de PIN" }).waitFor();
 		await page.setInputFiles('dialog input[type="file"]', recoveryPath);
 		await page.getByRole("button", { name: "Verificar archivo" }).click();
@@ -244,7 +244,7 @@ try {
 		await writeFile(foreignPath, JSON.stringify(foreign), "utf8");
 		try {
 			await page.getByRole("link", { name: "Configuración general" }).click();
-			await page.getByRole("button", { name: "Importar" }).click();
+			await page.getByRole("button", { name: "Usar archivo", exact: true }).click();
 			await page.getByRole("heading", { name: "Archivo de recuperación de PIN" }).waitFor();
 			await page.setInputFiles('dialog input[type="file"]', foreignPath);
 			await page.getByRole("button", { name: "Verificar archivo" }).click();
@@ -759,6 +759,30 @@ try {
 		await page.getByRole("button", { name: "Entrar" }).click();
 		await page.getByRole("link", { name: "Palabras desordenadas", exact: true }).click();
 		await page.locator(".activity-row").filter({ hasText: "Palabras desordenadas: Ayuno y oración" }).waitFor({ timeout: 8000 });
+	});
+
+	await step("el respaldo se exporta y se vuelve a importar", async () => {
+		await page.getByRole("link", { name: "Configuración general" }).click();
+		await page.getByRole("heading", { name: "Datos y respaldo" }).waitFor();
+		const downloadPromise = page.waitForEvent("download");
+		await page.getByRole("button", { name: "Exportar respaldo", exact: true }).click();
+		const download = await downloadPromise;
+		assert.match(download.suggestedFilename(), /^jla-respaldo-\d{4}-\d{2}-\d{2}\.json$/u);
+		const filePath = await download.path();
+		const text = await readFile(filePath, "utf8");
+		const backup = JSON.parse(text);
+		assert.equal(backup.kind, "jla.backup");
+		assert.equal(backup.version, 1);
+		assert.ok(backup.activities.length >= 1, "el respaldo trae actividades");
+		assert.equal(/recoveryKey|"pin"/u.test(text), false, "el respaldo nunca incluye el PIN");
+		await page.setInputFiles('input[aria-label="Archivo de respaldo"]', filePath);
+		await page.getByRole("button", { name: "Importar respaldo", exact: true }).click();
+		// The dialog lists what the file carries before writing anything.
+		await page.locator("dialog").getByText("Sopa de letras: Ayuno y oración").waitFor();
+		await page.locator("dialog").getByText(/exportado el/u).waitFor();
+		assert.equal(await page.locator("dialog .review-item").count(), backup.activities.length);
+		await page.locator("dialog").getByRole("button", { name: "Importar", exact: true }).click();
+		await page.getByText(/Se importaron \d+ actividades/u).waitFor();
 	});
 
 	await step("en móvil no hay desborde horizontal y las tarjetas se apilan", async () => {
