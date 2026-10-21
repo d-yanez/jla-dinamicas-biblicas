@@ -384,3 +384,12 @@ Evidencia: 158/158 unitarias (una nueva de los interruptores); `node tests/brows
 Corrección de verificación: dos pasos del smoke esperaban el badge «Publicada» dentro del editor; como publicar ahora vuelve a la lista, pasan a esperar la fila de la lista. La aserción del borrador espera la lista antes de contar filas, porque volver a la lista guarda el borrador de forma asíncrona.
 
 Evidencia: 158/158 unitarias; `node tests/browser-smoke.mjs` → 47/47 (nueva verificación: editar la publicada abre un borrador, la publicada conserva su nombre y conviven las dos filas).
+
+**L31** — Ajustes pedidos tras la primera prueba en proyector.
+
+1. **Tensión de fondo eliminada**: al usuario le pareció «maoma». Se quitaron `startTension`/`setTension`/`stopTension` del motor, la capa del plan de audio y el interruptor de `prefs`.
+2. **Layout de proyección**: la etapa se centra (antes todo quedaba a la izquierda), el fullscreen pinta el fondo crema (antes negro, con texto verde ilegible), y la palabra objetivo escala según su largo (`--letters`): `ARREPENTIMIENTO` ya no desborda ni arrastra scroll. En modo juego se ocultan el pie de página y el engranaje `html[data-mode="play"]`.
+3. **Sonido de revelación**: la animación de revelar merecía su propio sonido; ahora al revelar suena un chime ascendente, con interruptor propio.
+4. **Configuración de sonido en Administración**: nueva sección «Sonido» en Configuración general con volumen, silencio total y un interruptor por etapa (campana, tic, revelación), cada una con su botón «Probar». Todo sintetizado y persistido; la ayuda del juego mantiene volumen y silencio para el momento de jugar.
+
+Evidencia: 157/157 unitarias; `node tests/browser-smoke.mjs` → 47/47.

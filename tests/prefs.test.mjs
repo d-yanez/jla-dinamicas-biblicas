@@ -9,9 +9,9 @@ test("las preferencias por defecto son Grande sin alto contraste", () => {
 		highContrast: false,
 		soundVolume: 0.3,
 		muted: false,
-		soundTension: true,
 		soundTicks: true,
 		soundBell: true,
+		soundReveal: true,
 	});
 	assert.deepEqual(DISPLAY_SIZES, ["normal", "grande"]);
 	assert.equal(Object.isFrozen(DEFAULT_PREFS), true);
@@ -59,9 +59,7 @@ test("el volumen de sonido se guarda entre 0 y 1", () => {
 });
 
 test("cada etapa de sonido se puede apagar por separado", () => {
-	assert.deepEqual(normalizePrefs({ soundTension: false }).soundTension, false);
 	assert.deepEqual(normalizePrefs({ soundTicks: false }).soundTicks, false);
 	assert.deepEqual(normalizePrefs({ soundBell: false }).soundBell, false);
 	assert.equal(normalizePrefs({ soundTicks: "no" }).soundTicks, true, "valores no booleanos vuelven al defecto");
-	assert.equal(normalizePrefs({}).soundTension, true);
 });

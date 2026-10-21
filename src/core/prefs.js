@@ -10,9 +10,9 @@ export const DEFAULT_PREFS = Object.freeze({
 	highContrast: false,
 	soundVolume: 0.3,
 	muted: false,
-	soundTension: true,
 	soundTicks: true,
 	soundBell: true,
+	soundReveal: true,
 });
 
 /**
@@ -35,9 +35,9 @@ export function normalizePrefs(value) {
 		highContrast,
 		soundVolume,
 		muted,
-		soundTension: flag("soundTension"),
 		soundTicks: flag("soundTicks"),
 		soundBell: flag("soundBell"),
+		soundReveal: flag("soundReveal"),
 	};
 }
 

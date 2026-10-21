@@ -1260,3 +1260,57 @@ html[data-contrast="alto"] .sopa-grid__cell--solved {
 	animation: jla-cell-reveal 280ms ease-out both;
 	animation-delay: var(--reveal-delay, 0ms);
 }
+
+/* ------------------------- proyección: centrado, fullscreen y palabras largas */
+
+html[data-mode="play"] .site-footer,
+html[data-mode="play"] .gear {
+	display: none;
+}
+
+html[data-mode="play"] body,
+html[data-mode="play"] {
+	overflow-x: hidden;
+}
+
+.play {
+	min-height: calc(100dvh - 4.6rem);
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	max-width: 76rem;
+	padding: var(--space-3);
+}
+
+.play-stage {
+	align-items: center;
+	text-align: center;
+	width: 100%;
+}
+
+.play .play-history ul,
+.play .play-hints ul {
+	justify-content: center;
+}
+
+.play .play-hints ul {
+	display: inline-block;
+	text-align: left;
+}
+
+.play-target {
+	font-size: clamp(1.8rem, min(9vw, calc(86vw / var(--letters, 8))), 9rem);
+	letter-spacing: 0.08em;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+}
+
+.play:fullscreen {
+	background: var(--surface);
+	padding: var(--space-5);
+}
+
+.play:fullscreen .play-stage {
+	min-height: calc(100dvh - 2 * var(--space-5));
+	justify-content: center;
+}

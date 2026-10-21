@@ -306,6 +306,8 @@ export async function render() {
 	const nodes = [renderHeader(), main, renderFooter()];
 	if (route.name !== "admin") nodes.push(renderGear());
 	root.replaceChildren(...nodes);
+	// The play screen hides the site footer and the admin gear: it is the audience view.
+	document.documentElement.dataset.mode = main.classList?.contains("play") ? "play" : "";
 	if (!firstRender && key !== lastRenderedRouteKey) main.focus({ preventScroll: true });
 	lastRenderedRouteKey = key;
 	firstRender = false;

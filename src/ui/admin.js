@@ -5,6 +5,7 @@
 import { ADMIN_SECTIONS, SECTION_LABELS } from "../core/router.js";
 import { el } from "./dom.js";
 import { renderSecurityGroup } from "./security.js";
+import { createAudioEngine } from "./audio.js";
 import { mountPalabrasSection } from "./palabras-admin.js";
 import { mountSopaSection } from "./sopa-admin.js";
 
@@ -110,6 +111,72 @@ function renderAppearanceGroup({ prefs, onChange }) {
 	);
 }
 
+let soundEngine;
+
+/** One shared engine for the test buttons; its context is created on the first click. */
+function engineFor(prefs) {
+	if (!soundEngine) soundEngine = createAudioEngine({ volume: prefs.soundVolume, muted: prefs.muted });
+	else {
+		soundEngine.setVolume(prefs.soundVolume);
+		soundEngine.setMuted(prefs.muted);
+	}
+	return soundEngine;
+}
+
+function renderSoundGroup({ prefs, onChange }) {
+	const engine = engineFor(prefs);
+	const test = (cue) => {
+		engine.unlock();
+		if (cue === "bell") engine.bell("start");
+		else if (cue === "tick") engine.tick(4);
+		else if (cue === "reveal") engine.reveal();
+	};
+	const volume = el("input", { type: "range", min: "0", max: "100", step: "5", value: String(Math.round(prefs.soundVolume * 100)), "aria-label": "Volumen del sonido" });
+	volume.addEventListener("input", () => {
+		const value = Number(volume.value) / 100;
+		engine.setVolume(value);
+		onChange({ soundVolume: value });
+	});
+	const muted = el("input", { type: "checkbox", id: "sonido-silencio", checked: prefs.muted });
+	muted.addEventListener("change", () => onChange({ muted: muted.checked }));
+
+	const stages = [
+		["soundBell", "Campana al empezar y al terminar", "bell", "Campana"],
+		["soundTicks", "Tic en los últimos cinco segundos", "tick", "Tic"],
+		["soundReveal", "Sonido al revelar una solución", "reveal", "Revelación"],
+	];
+	const rows = stages.map(([key, label, cue, action]) => {
+		const input = el("input", { type: "checkbox", id: `sonido-${key}`, checked: prefs[key] !== false });
+		input.addEventListener("change", () => onChange({ [key]: input.checked }));
+		return el(
+			"div",
+			{ class: "setting-row" },
+			el("label", { class: "setting-row__text", for: `sonido-${key}` }, el("span", { class: "setting-row__label" }, label)),
+			el("div", { class: "row" }, input, el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => test(cue) }, `Probar ${action.toLowerCase()}`)),
+		);
+	});
+
+	return el(
+		"section",
+		{ class: "settings-group", "aria-labelledby": "group-sound" },
+		el("h2", { class: "settings-group__title", id: "group-sound" }, "Sonido"),
+		el("p", { class: "settings-group__desc" }, "Se guarda en este dispositivo. Los sonidos son sintetizados: no hay archivos ni descargas."),
+		el(
+			"div",
+			{ class: "setting-row" },
+			el("label", { class: "setting-row__text", for: "volumen-admin" }, el("span", { class: "setting-row__label" }, "Volumen")),
+			volume,
+		),
+		el(
+			"div",
+			{ class: "setting-row" },
+			el("label", { class: "setting-row__text", for: "sonido-silencio" }, el("span", { class: "setting-row__label" }, "Silencio total")),
+			muted,
+		),
+		...rows,
+	);
+}
+
 function renderDataGroup() {
 	return el(
 		"section",
@@ -127,7 +194,12 @@ function renderDataGroup() {
 export function renderAdmin({ section, prefs, publishedCount = 0, downloaded = false, actions, db }) {
 	let content;
 	if (section === "config") {
-		content = [renderAppearanceGroup({ prefs, onChange: actions.changePrefs }), renderSecurityGroup({ downloaded, actions }), renderDataGroup()];
+		content = [
+			renderAppearanceGroup({ prefs, onChange: actions.changePrefs }),
+			renderSoundGroup({ prefs, onChange: actions.changePrefs }),
+			renderSecurityGroup({ downloaded, actions }),
+			renderDataGroup(),
+		];
 	} else if (section === "sopa" && db) {
 		content = [mountSopaSection({ db }).element];
 	} else if (section === "palabras" && db) {

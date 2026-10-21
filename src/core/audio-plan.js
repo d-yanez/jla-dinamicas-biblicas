@@ -4,7 +4,6 @@
 // play screen only has to forward the plan to the WebAudio engine.
 
 export const DEFAULT_VOLUME = 0.3;
-export const TENSION_WINDOW_MS = 10_000;
 
 /** Sounds to play for one engine event, in order. */
 export function planForEvent(event) {
@@ -12,6 +11,7 @@ export function planForEvent(event) {
 	if (event.type === "round-start") return [{ sound: "bell", kind: "start" }];
 	if (event.type === "extra-start") return [{ sound: "bell", kind: "start" }];
 	if (event.type === "time-up") return [{ sound: "bell", kind: "end" }];
+	if (event.type === "reveal") return [{ sound: "reveal" }];
 	if (event.type === "tick") {
 		const secondsLeft = Number(event.secondsLeft);
 		const safe = Number.isFinite(secondsLeft) ? secondsLeft : 5;
@@ -20,18 +20,6 @@ export function planForEvent(event) {
 		return [{ sound: "tick", intensity }];
 	}
 	return [];
-}
-
-/**
- * 0 = silent, 1 = full tension. Only inside the last ten seconds of a running round or
- * extra time: before that there is nothing to heighten.
- */
-export function tensionLevel({ remainingMs, running, stage } = {}) {
-	if (!running) return 0;
-	if (stage !== "round" && stage !== "extra") return 0;
-	const remaining = Math.max(0, Number(remainingMs) || 0);
-	if (remaining > TENSION_WINDOW_MS) return 0;
-	return Math.round((1 - remaining / TENSION_WINDOW_MS) * 100) / 100;
 }
 
 /** Clamps a stored volume to a usable range. */

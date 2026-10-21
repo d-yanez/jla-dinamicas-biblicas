@@ -4,7 +4,7 @@
 // extra time) is already tested without a browser.
 
 import { computeReveals, normalizeSolution } from "../core/anagram.js";
-import { planForEvent, tensionLevel } from "../core/audio-plan.js";
+import { planForEvent } from "../core/audio-plan.js";
 import { renderInstructions } from "../core/instructions.js";
 import { PLAY_EVENT, PLAY_STAGE, createRoundSession, formatClock } from "../core/rounds.js";
 import { directionById, pathCells } from "../core/sopa.js";
@@ -42,6 +42,7 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 	function soundEnabled(item) {
 		if (item.sound === "tick") return prefs?.soundTicks !== false;
 		if (item.sound === "bell") return prefs?.soundBell !== false;
+		if (item.sound === "reveal") return prefs?.soundReveal !== false;
 		return true;
 	}
 
@@ -52,9 +53,6 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 	function run(action) {
 		const events = action() ?? [];
 		applyEvents(events);
-		if (events.some((event) => event.type === PLAY_EVENT.TIME_UP || event.type === PLAY_EVENT.ROUND_START)) {
-			audio.stopTension();
-		}
 		render();
 	}
 
@@ -64,12 +62,7 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 			clockNode.textContent = formatClock(current.remainingMs);
 			clockNode.classList.toggle("play-clock--urgent", current.running && current.remainingMs > 0 && current.remainingMs <= 5000);
 		}
-		if (current.running && prefs?.soundTension !== false) {
-			audio.startTension();
-			audio.setTension(tensionLevel(current));
-		} else {
-			audio.stopTension();
-		}
+		void current;
 	}
 
 	function startTimer() {
@@ -86,7 +79,6 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 			const events = session.tick(delta);
 			if (events.length > 0) {
 				applyEvents(events);
-				if (events.some((event) => event.type === PLAY_EVENT.TIME_UP)) audio.stopTension();
 			}
 			updateClock();
 		}, CLOCK_INTERVAL_MS);
@@ -248,7 +240,6 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 					{ class: "sound-stages" },
 					el("legend", { class: "field__label" }, "Etapas del sonido"),
 					...[
-						["soundTension", "Tensión de fondo mientras corre el reloj"],
 						["soundTicks", "Tic en los últimos cinco segundos"],
 						["soundBell", "Campana al empezar y al terminar"],
 					].map(([key, label]) => {
@@ -425,7 +416,7 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 			"section",
 			{ class: "play-stage" },
 			el("p", { class: "play-eyebrow" }, `Ronda ${current.roundNumber} de ${current.roundCount}${current.stage === PLAY_STAGE.EXTRA ? " · tiempo extra" : ""}`),
-			el("h1", { class: "play-target" }, target || "—"),
+			el("h1", { class: "play-target", style: `--letters: ${Math.max(4, target.length || 4)}` }, target || "—"),
 			clockBlock(current),
 		);
 
@@ -602,7 +593,6 @@ export function mountPlayScreen({ game, activity, prefs, onPrefsChange }) {
 		session = createRoundSession({ roundSeconds: activity.roundSeconds });
 		state.discoveries = {};
 		state.pauseOverlay = false;
-		audio.stopTension();
 		render();
 	}
 

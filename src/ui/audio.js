@@ -9,8 +9,6 @@ import { DEFAULT_VOLUME, normalizeVolume } from "../core/audio-plan.js";
 export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {}) {
 	let context;
 	let master;
-	let tension;
-	let tensionGain;
 	let currentVolume = normalizeVolume(volume);
 	let mutedNow = muted === true;
 
@@ -58,51 +56,16 @@ export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {
 		tone({ frequency: base / 2, duration: 1.4, gain: 0.3 });
 	}
 
+	/** A short rising chime: something was just revealed. */
+	function reveal() {
+		tone({ frequency: 880, duration: 0.24, gain: 0.34 });
+		tone({ frequency: 1320, duration: 0.34, gain: 0.2, startAt: 0.09 });
+		tone({ frequency: 1760, type: "triangle", duration: 0.5, gain: 0.1, startAt: 0.18 });
+	}
+
 	function tick(intensity = 0) {
 		const level = Math.min(4, Math.max(0, Number(intensity) || 0));
 		tone({ frequency: 1180 + level * 90, type: "triangle", duration: 0.07, gain: 0.1 + level * 0.05 });
-	}
-
-	function startTension() {
-		const ctx = ensure();
-		if (!ctx || !master || tension) return;
-		tension = ctx.createOscillator();
-		tensionGain = ctx.createGain();
-		const filter = ctx.createBiquadFilter();
-		tension.type = "sawtooth";
-		tension.frequency.value = 70;
-		filter.type = "lowpass";
-		filter.frequency.value = 320;
-		tensionGain.gain.value = 0.0001;
-		tension.connect(filter);
-		filter.connect(tensionGain);
-		tensionGain.connect(master);
-		tension.start();
-	}
-
-	/** 0..1: louder and brighter as the round runs out. */
-	function setTension(level) {
-		if (!tension || !tensionGain || !context) return;
-		const target = Math.min(1, Math.max(0, Number(level) || 0));
-		const at = context.currentTime;
-		tensionGain.gain.cancelScheduledValues(at);
-		// Audible from the first second of the round: this is the "background while the
-		// clock runs" the moderator asked for, and it grows in the last ten seconds.
-		tensionGain.gain.setTargetAtTime(0.06 + target * 0.14, at, 0.12);
-		tension.frequency.setTargetAtTime(70 + target * 30, at, 0.2);
-	}
-
-	function stopTension() {
-		if (!tension) return;
-		try {
-			tension.stop();
-		} catch {
-			/* already stopped */
-		}
-		tension.disconnect?.();
-		tensionGain?.disconnect?.();
-		tension = undefined;
-		tensionGain = undefined;
 	}
 
 	function setVolume(next) {
@@ -121,11 +84,11 @@ export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {
 		for (const item of plan ?? []) {
 			if (item.sound === "bell") bell(item.kind);
 			else if (item.sound === "tick") tick(item.intensity);
+			else if (item.sound === "reveal") reveal();
 		}
 	}
 
 	function dispose() {
-		stopTension();
 		if (context) {
 			try {
 				void context.close();
@@ -142,9 +105,7 @@ export function createAudioEngine({ volume = DEFAULT_VOLUME, muted = false } = {
 		play,
 		bell,
 		tick,
-		startTension,
-		setTension,
-		stopTension,
+		reveal,
 		setVolume,
 		setMuted,
 		isMuted: () => mutedNow,
