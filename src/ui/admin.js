@@ -116,6 +116,62 @@ function renderAppearanceGroup({ prefs, onChange }) {
 	);
 }
 
+/** Typed confirmation: a plain "are you sure?" is too easy to accept by reflex. */
+function openResetDialog(actions) {
+	const sheet = createDialog("Restablecer con la configuración inicial");
+	const input = el("input", { class: "input", type: "text", autocomplete: "off", "aria-label": "Escribí RESTABLECER para confirmar" });
+	const confirm = el("button", { class: "btn btn--danger", type: "button", disabled: true }, "Restablecer");
+	input.addEventListener("input", () => {
+		confirm.disabled = input.value.trim().toUpperCase() !== "RESTABLECER";
+	});
+	confirm.addEventListener("click", async () => {
+		confirm.disabled = true;
+		let result;
+		try {
+			result = await actions.resetConfig();
+		} catch (error) {
+			// A reset that fails must say so here, not leave the dialog frozen.
+			sheet.content.replaceChildren(
+				el("p", { class: "notice notice--warn" }, `No se pudo restablecer: ${error?.message ?? "error desconocido"}`),
+				el("div", { class: "jla-dialog__actions" }, el("button", { class: "btn btn--ghost", type: "button", onclick: () => sheet.close() }, "Cerrar")),
+			);
+			return;
+		}
+		sheet.content.replaceChildren(
+			el("p", {}, `Listo: se restablecieron ${result.total} actividades (${result.published} publicadas).`),
+			el("p", { class: "field__hint" }, "El PIN y las preferencias de este equipo no cambiaron."),
+			el(
+				"div",
+				{ class: "jla-dialog__actions" },
+				el("button", { class: "btn btn--primary", type: "button", onclick: () => sheet.close() }, "Listo"),
+			),
+		);
+		sheet.dialog.addEventListener("close", () => {
+			void actions.refresh();
+		});
+	});
+	sheet.content.append(
+		el(
+			"div",
+			{ class: "stack" },
+			el(
+				"p",
+				{},
+				"Se van a borrar todas las actividades de este equipo y se va a volver a aplicar la configuración que viene con el sitio. Después de esto, la lista muestra lo que está publicado en el repositorio.",
+			),
+			el("p", { class: "notice notice--warn" }, "Si tenés actividades sin respaldar, exportá un respaldo antes de continuar."),
+			el("div", { class: "field" }, el("label", { class: "field__label", for: "confirmar-restablecer" }, "Escribí RESTABLECER para confirmar"), input),
+			el(
+				"div",
+				{ class: "jla-dialog__actions" },
+				el("button", { class: "btn btn--ghost", type: "button", onclick: () => sheet.close() }, "Cancelar"),
+				confirm,
+			),
+		),
+	);
+	sheet.open();
+}
+
 let soundEngine;
 
 /** One shared engine for the test buttons; its context is created on the first click. */
@@ -314,6 +370,21 @@ function renderDataGroup({ actions, version }) {
 				el("span", { class: "setting-row__hint" }, "Desde otro dispositivo. Todo lo importado entra como borrador; la publicada de este equipo no cambia."),
 			),
 			el("div", { class: "row" }, fileInput, importButton),
+		),
+		el(
+			"div",
+			{ class: "setting-row" },
+			el(
+				"div",
+				{ class: "setting-row__text" },
+				el("span", { class: "setting-row__label" }, "Restablecer con la configuración inicial"),
+				el(
+					"span",
+					{ class: "setting-row__hint" },
+					"Borra las actividades de este equipo y vuelve a aplicar la configuración del repositorio. El PIN y las preferencias se conservan.",
+				),
+			),
+			el("button", { class: "btn btn--danger btn--small", type: "button", onclick: () => openResetDialog(actions) }, "Restablecer"),
 		),
 		status,
 	);

@@ -116,6 +116,23 @@ try {
 		assert.match(await page.locator(".play-target").textContent(), /^[A-Z]+$/u, "la palabra desordenada se proyecta");
 	});
 
+	await step("restablecer vuelve a aplicar la configuración del repositorio", async () => {
+		await page.goto(new URL("#/admin", baseUrl).href);
+		await page.getByRole("heading", { name: "Configurar el PIN de administración" }).waitFor({ timeout: 8000 });
+		await page.locator("input[inputmode=\"numeric\"]").nth(0).fill("1234");
+		await page.locator("input[inputmode=\"numeric\"]").nth(1).fill("1234");
+		await page.getByRole("button", { name: "Crear PIN y continuar" }).click();
+		await page.getByRole("heading", { name: "Guardá el archivo de recuperación" }).waitFor();
+		await page.getByRole("button", { name: "Listo" }).click();
+		await page.getByRole("button", { name: "Continuar igual" }).click();
+		await page.getByRole("link", { name: "Configuración general" }).click();
+		await page.getByRole("button", { name: "Restablecer", exact: true }).click();
+		await page.getByLabel("Escribí RESTABLECER para confirmar").fill("RESTABLECER");
+		await page.locator("dialog").getByRole("button", { name: "Restablecer", exact: true }).click();
+		await page.getByText(/se restablecieron \d+ actividades/u).waitFor();
+		assert.match(await page.locator("dialog").innerText(), /\([1-9]\d* publicadas\)/u, "vuelve a haber publicadas");
+	});
+
 	assert.deepEqual(problems, [], `errores en la consola del navegador: ${problems.join(" | ")}`);
 	console.log(`\n${checks.length} verificaciones de la configuración inicial OK`);
 } finally {

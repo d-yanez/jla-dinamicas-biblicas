@@ -121,6 +121,16 @@ export async function removeRow(db, storeName, key) {
 	await runTransaction(db, storeName, "readwrite", (store) => store.delete(key));
 }
 
+/** Removes every row of a store. */
+export function clearStore(db, storeName) {
+	return new Promise((resolve, reject) => {
+		const transaction = db.transaction(storeName, "readwrite");
+		transaction.objectStore(storeName).clear();
+		transaction.oncomplete = () => resolve();
+		transaction.onerror = () => reject(transaction.error ?? new Error("No se pudo vaciar el almacenamiento local."));
+	});
+}
+
 /** All rows of a store, as an array. */
 export function getAll(db, storeName) {
 	return new Promise((resolve, reject) => {

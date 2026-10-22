@@ -4,7 +4,15 @@
 // storage knowledge and there is exactly one place that can mutate the PIN, the
 // recovery identity or the preferences.
 
-import { applyBundledSeed, countPublishedActivities, ensureExampleActivities, exportBackup, fetchPublishedActivity, importBackup } from "./core/activities.js";
+import {
+	applyBundledSeed,
+	countPublishedActivities,
+	ensureExampleActivities,
+	exportBackup,
+	fetchPublishedActivity,
+	importBackup,
+	resetToBundledSeed,
+} from "./core/activities.js";
 import { ADMIN_ACCESS, canHonorVerification, createAdminGate, shouldOfferRecoveryFile } from "./core/admin-gate.js";
 import { openDatabase, readSetting, writeSetting } from "./core/db.js";
 import { createPinRecord, isPinRecord, normalizePin, verifyPin } from "./core/pin.js";
@@ -271,6 +279,10 @@ async function buildAdmin(route) {
 				const backup = await exportBackup(state.db, state.prefs, state.version);
 				const day = new Date().toISOString().slice(0, 10);
 				downloadJson(`jla-respaldo-${day}.json`, backup);
+			},
+			resetConfig: async () => resetToBundledSeed(state.db),
+			refresh: async () => {
+				await render();
 			},
 			importBackup: async (text) => {
 				const result = await importBackup(state.db, text);

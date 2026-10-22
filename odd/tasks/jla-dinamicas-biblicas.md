@@ -501,3 +501,19 @@ Verificación nueva en el smoke: en plena ronda se cambia el viewport a **1920×
 - **La verificación se partió en dos**, porque ahora el navegador limpio ya no muestra los ejemplos:
   - `tests/browser-smoke.mjs` intercepta `assets/configuracion-inicial.json` y sirve un **respaldo válido y vacío**, para seguir probando el flujo de ejemplos de forma determinista. Un 404 servía igual, pero ensuciaba la consola y el propio smoke exige consola limpia: 52/52.
   - `tests/seed-smoke.mjs` (nuevo) es el único lugar donde se ejerce la semilla **real**: navegador sin datos → carga las dos actividades publicadas, la portada ofrece ambos juegos y los dos arrancan una ronda. 4/4.
+
+**L43** — El usuario necesitaba limpiar equipos que **ya tenían datos** (el celular mostraba los ejemplos viejos y la semilla no se aplica a un navegador con datos). Se adelantó, con su autorización expresa, una acción de administración:
+
+**«Restablecer con la configuración inicial»** (Administración → Datos y respaldo):
+- Confirmación **escrita**: hay que teclear `RESTABLECER`; un «¿seguro?» se acepta por reflejo.
+- Borra las actividades del equipo y los marcadores de siembra, y **vuelve a aplicar la semilla** (si la semilla está vacía o falta, vuelven los ejemplos).
+- **Conserva el PIN y las preferencias**: restablece el trabajo, no la seguridad del dispositivo.
+- Si falla, lo dice en el diálogo en vez de quedarse colgado.
+
+Versión **0.6.1** (parche: el formato de datos no cambió).
+
+Dos defectos encontrados al implementarlo:
+1. El bloque del botón se insertó dentro de `renderSoundGroup` por un ancla repetida, y esa función no recibe `actions` → `ReferenceError: actions is not defined` al renderizar el panel. Movido a `renderDataGroup`.
+2. Ambas suites esperaban el resultado con mayúscula (`/Se restablecieron/`) y el diálogo dice «Listo: **se** restablecieron…»: fallo de la prueba, no de la app.
+
+Evidencia: 184/184 unitarias; 53/53 del flujo y 5/5 de la semilla, en local y contra el sitio publicado.

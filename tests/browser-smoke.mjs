@@ -861,6 +861,22 @@ try {
 		await page.getByText(/Se importaron \d+ actividades/u).waitFor();
 	});
 
+	await step("restablecer vuelve a dejar la configuración inicial del repositorio", async () => {
+		await page.getByRole("link", { name: "Configuración general" }).click();
+		await page.getByRole("button", { name: "Restablecer", exact: true }).click();
+		const input = page.getByLabel("Escribí RESTABLECER para confirmar");
+		await input.waitFor();
+		const confirm = page.locator("dialog").getByRole("button", { name: "Restablecer", exact: true });
+		assert.equal(await confirm.isDisabled(), true, "sin escribir la palabra no se puede confirmar");
+		await input.fill("RESTABLECER");
+		await confirm.click();
+		await page.getByText(/se restablecieron \d+ actividades/u).waitFor();
+		await page.locator("dialog").getByRole("button", { name: "Listo", exact: true }).click();
+		await page.getByRole("link", { name: "Sopa de letras", exact: true }).click();
+		await page.locator(".activity-row").first().waitFor({ timeout: 8000 });
+		assert.match(await page.locator(".activity-row").first().textContent(), /Borrador/u, "vuelven los ejemplos como borradores");
+	});
+
 	await step("en móvil no hay desborde horizontal y las tarjetas se apilan", async () => {
 		const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
 		const mobilePage = await mobileContext.newPage();

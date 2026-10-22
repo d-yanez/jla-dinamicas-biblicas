@@ -13,7 +13,7 @@ import {
 	validateActivity,
 } from "./activity-model.js";
 import { buildBackup, mergeBackup, parseBackup } from "./backup.js";
-import { getAll, getRow, putRow, readSetting, removeRow, writeSetting } from "./db.js";
+import { clearStore, deleteSetting, getAll, getRow, putRow, readSetting, removeRow, writeSetting } from "./db.js";
 import { SEED_MARKER_KEY, SEED_PATH, planSeed } from "./seed.js";
 import { createId } from "./ids.js";
 import { defaultInstructionsFor } from "./instructions.js";
@@ -315,3 +315,26 @@ export async function ensureExampleActivities(db) {
 }
 
 export { SETTINGS_STORE };
+
+/**
+ * Wipes this device's activities and puts the bundled configuration back.
+ *
+ * It is the way out of "this browser already has data, so the seed will never apply":
+ * the marker, the example flags and every activity are removed, and the seed is applied
+ * again. Preferences and the PIN are deliberately kept — this resets the work, not the
+ * device's security.
+ */
+export async function resetToBundledSeed(db, fetchImpl = globalThis.fetch) {
+	await clearStore(db, ACTIVITIES_STORE);
+	await deleteSetting(db, SEED_MARKER_KEY);
+	await deleteSetting(db, EXAMPLES_KEY);
+	await deleteSetting(db, SEEDED_KEYS_KEY);
+	const seeded = await applyBundledSeed(db, fetchImpl);
+	if (!seeded.applied) await ensureExampleActivities(db);
+	const activities = await listActivities(db);
+	return {
+		seeded: seeded.applied,
+		total: activities.length,
+		published: activities.filter((activity) => activity.status === ACTIVITY_STATUS.PUBLISHED).length,
+	};
+}
