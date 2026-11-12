@@ -178,12 +178,18 @@ function normalizeSopaGame(value) {
 	const game = emptyGame(ACTIVITY_TYPE.SOPA);
 	if (typeof value !== "object" || value === null) return game;
 	if (Array.isArray(value.words)) {
+		// A row the moderator just added is still empty. Dropping it made the new input
+		// vanish from the draft while the DOM kept showing it, so every keystroke after
+		// that landed on an index that no longer existed. The row is kept; validation is
+		// what decides whether it is usable.
 		game.words = value.words.flatMap((word) => {
-			const text = typeof word?.text === "string" ? word.text : "";
+			if (typeof word !== "object" || word === null) return [];
+			const text = typeof word.text === "string" ? word.text : "";
 			const normalized = normalizeWord(text);
-			if (!normalized) return [];
-			const id = typeof word?.id === "string" && word.id.length > 0 ? word.id : createId();
-			return [{ id, text, normalized }];
+			const id = typeof word.id === "string" && word.id.length > 0 ? word.id : createId();
+			// `normalized` is how every consumer asks «is this a real word?». It stays
+			// absent while the text is not one, so an empty row can never pass for valid.
+			return [typeof normalized === "string" ? { id, text, normalized } : { id, text }];
 		});
 	}
 	if (Array.isArray(value.variants)) {
@@ -206,19 +212,22 @@ function normalizeHints(value) {
 }
 
 function normalizePalabrasEntry(value, { withHints }) {
-	const solution = typeof value?.solution === "string" ? value.solution : "";
+	if (typeof value !== "object" || value === null) return undefined;
+	const solution = typeof value.solution === "string" ? value.solution : "";
 	const normalized = normalizeSolution(solution);
-	if (normalized === undefined) return undefined;
 	const entry = {
-		id: typeof value?.id === "string" && value.id.length > 0 ? value.id : createId(),
+		id: typeof value.id === "string" && value.id.length > 0 ? value.id : createId(),
 		solution,
-		normalized,
 		// The anagram is kept exactly as written; validation is what rejects a mismatch,
 		// so a half-edited draft is never silently repaired or discarded.
-		anagram: typeof value?.anagram === "string" ? value.anagram : "",
+		anagram: typeof value.anagram === "string" ? value.anagram : "",
 	};
-	if (withHints) entry.hints = normalizeHints(value?.hints);
-	if (Array.isArray(value?.reveals)) {
+	// Same rule as an empty hint or an empty sopa row: a row that was just added is kept
+	// and validation is what rejects it. `normalized` stays absent until the solution is
+	// real, so an empty row can never pass for a valid word.
+	if (typeof normalized === "string") entry.normalized = normalized;
+	if (withHints) entry.hints = normalizeHints(value.hints);
+	if (Array.isArray(value.reveals)) {
 		entry.reveals = value.reveals.filter((index) => Number.isInteger(index) && index >= 0);
 	}
 	return entry;
@@ -285,16 +294,22 @@ function variantCoversWordsSafe(variant, validWords) {
 export function refreshDerivedState(activity) {
 	if (activity?.type === ACTIVITY_TYPE.PALABRAS) {
 		const level = activity.letterReveals ?? 0;
-		const words = (activity.game?.words ?? [])
-			.map((word) => ({
-				...word,
-				normalized: normalizeSolution(word.solution),
-				reveals: computeReveals(word.solution, level),
-			}))
-			.filter((word) => typeof word.normalized === "string");
-		const tiebreakers = (activity.game?.tiebreakers ?? [])
-			.map((tiebreaker) => ({ ...tiebreaker, normalized: normalizeSolution(tiebreaker.solution) }))
-			.filter((tiebreaker) => typeof tiebreaker.normalized === "string");
+		// Empty rows are kept here too: this runs on every save, and dropping them would
+		// undo the row the editor just added — the defect the sopa words had.
+		const words = (activity.game?.words ?? []).map((word) => {
+			const normalized = normalizeSolution(word.solution);
+			const entry = { ...word, reveals: computeReveals(word.solution, level) };
+			if (typeof normalized === "string") entry.normalized = normalized;
+			else delete entry.normalized;
+			return entry;
+		});
+		const tiebreakers = (activity.game?.tiebreakers ?? []).map((tiebreaker) => {
+			const normalized = normalizeSolution(tiebreaker.solution);
+			const entry = { ...tiebreaker };
+			if (typeof normalized === "string") entry.normalized = normalized;
+			else delete entry.normalized;
+			return entry;
+		});
 		return refreshTestedState({ ...activity, game: { ...activity.game, words, tiebreakers } });
 	}
 	const words = (activity?.game?.words ?? []).map((word) => {

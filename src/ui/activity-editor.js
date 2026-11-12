@@ -61,9 +61,18 @@ export function mountActivityEditor({ db, type, renderGame }) {
 
 	const markDirty = () => session.markDirty();
 
-	function renderFields(draft) {
+	function renderFields() {
+		// Reads here are render-time only. Every write below resolves the live draft:
+		// an autosave replaces state.draft with the saved copy, so a handler closed over
+		// this `draft` would write into a dead object and the edit would vanish on the
+		// next save — which is exactly what happened to every field after the first one.
+		const draft = session.state.draft;
+		const currentDraft = () => session.state.draft;
 		const grid = el("div", { class: "field-grid" });
 		const instructionsPreview = el("p", { class: "field__hint" }, `Vista previa: ${renderInstructions(draft)}`);
+		const renderInstructionsPreview = () => {
+			instructionsPreview.textContent = `Vista previa: ${renderInstructions(currentDraft())}`;
+		};
 		const instructionsId = "campo-instrucciones";
 		const instructions = el("textarea", {
 			class: "input input--area",
@@ -72,8 +81,8 @@ export function mountActivityEditor({ db, type, renderGame }) {
 			value: draft.instructions,
 		});
 		instructions.addEventListener("input", () => {
-			draft.instructions = instructions.value;
-			instructionsPreview.textContent = `Vista previa: ${renderInstructions(draft)}`;
+			currentDraft().instructions = instructions.value;
+			renderInstructionsPreview();
 			markDirty();
 		});
 
@@ -82,19 +91,20 @@ export function mountActivityEditor({ db, type, renderGame }) {
 				label: "Nombre de la actividad",
 				value: draft.name,
 				onInput: (value) => {
-					draft.name = value;
-					if (nodes.title) nodes.title.textContent = activityName(draft);
+					const live = currentDraft();
+					live.name = value;
+					if (nodes.title) nodes.title.textContent = activityName(live);
 					markDirty();
 				},
 			}),
-			textField({ label: "Tema bíblico", value: draft.theme, onInput: (value) => { draft.theme = value; markDirty(); } }),
+			textField({ label: "Tema bíblico", value: draft.theme, onInput: (value) => { currentDraft().theme = value; markDirty(); } }),
 			textField({
 				label: "Referencia bíblica",
 				value: draft.reference,
 				hint: "Opcional. Solo la referencia, sin transcribir el texto.",
-				onInput: (value) => { draft.reference = value; markDirty(); },
+				onInput: (value) => { currentDraft().reference = value; markDirty(); },
 			}),
-			textField({ label: "Enseñanza", value: draft.teaching, multiline: true, hint: "Opcional.", onInput: (value) => { draft.teaching = value; markDirty(); } }),
+			textField({ label: "Enseñanza", value: draft.teaching, multiline: true, hint: "Opcional.", onInput: (value) => { currentDraft().teaching = value; markDirty(); } }),
 			textField({
 				label: "Duración por ronda (segundos)",
 				value: String(draft.roundSeconds),
@@ -103,7 +113,7 @@ export function mountActivityEditor({ db, type, renderGame }) {
 				hint: `Entre ${ROUND_SECONDS.min} y ${ROUND_SECONDS.max}. Se usa en las diez rondas.`,
 				onInput: (value) => {
 					const seconds = Number.parseInt(value, 10);
-					if (Number.isInteger(seconds)) draft.roundSeconds = seconds;
+					if (Number.isInteger(seconds)) currentDraft().roundSeconds = seconds;
 					markDirty();
 				},
 			}),
@@ -123,9 +133,10 @@ export function mountActivityEditor({ db, type, renderGame }) {
 						class: "btn btn--ghost btn--small",
 						type: "button",
 						onclick: () => {
-							draft.instructions = defaultInstructionsFor(type);
-							instructions.value = draft.instructions;
-							instructionsPreview.textContent = `Vista previa: ${renderInstructions(draft)}`;
+							const live = currentDraft();
+							live.instructions = defaultInstructionsFor(type);
+							instructions.value = live.instructions;
+							renderInstructionsPreview();
 							markDirty();
 						},
 					},
@@ -138,11 +149,11 @@ export function mountActivityEditor({ db, type, renderGame }) {
 				value: draft.reflection,
 				multiline: true,
 				hint: "Opcional. Se muestra en una pantalla aparte al terminar.",
-				onInput: (value) => { draft.reflection = value; markDirty(); },
+				onInput: (value) => { currentDraft().reflection = value; markDirty(); },
 			}),
-			textField({ label: "Referencia de la reflexión", value: draft.reflectionReference, hint: "Opcional.", onInput: (value) => { draft.reflectionReference = value; markDirty(); } }),
-			textField({ label: "Nombre del evento", value: draft.eventName, hint: "Opcional. Aparece en el PDF solo si está configurado.", onInput: (value) => { draft.eventName = value; markDirty(); } }),
-			textField({ label: "Fecha del evento", value: draft.eventDate, type: "date", onInput: (value) => { draft.eventDate = value; markDirty(); } }),
+			textField({ label: "Referencia de la reflexión", value: draft.reflectionReference, hint: "Opcional.", onInput: (value) => { currentDraft().reflectionReference = value; markDirty(); } }),
+			textField({ label: "Nombre del evento", value: draft.eventName, hint: "Opcional. Aparece en el PDF solo si está configurado.", onInput: (value) => { currentDraft().eventName = value; markDirty(); } }),
+			textField({ label: "Fecha del evento", value: draft.eventDate, type: "date", onInput: (value) => { currentDraft().eventDate = value; markDirty(); } }),
 		);
 		return grid;
 	}
@@ -257,7 +268,7 @@ export function mountActivityEditor({ db, type, renderGame }) {
 					),
 				),
 				nodes.notice,
-				renderFields(draft),
+				renderFields(),
 				el("hr", { class: "divider" }),
 				game.element,
 				el("hr", { class: "divider" }),
@@ -359,9 +370,14 @@ export function mountActivityEditor({ db, type, renderGame }) {
 }
 
 function describeGame(activity) {
+	// Only the rows that hold something count: an empty row is a slot waiting to be
+	// filled, not a word the moderator already has. Each game names its field differently.
+	const filled = (entries, field) => (entries ?? []).filter((entry) => String(entry?.[field] ?? "").trim().length > 0).length;
 	if (activity.type === "palabras") {
-		const ties = activity.game.tiebreakers.length;
-		return [`${activity.game.words.length} palabras`, `${ties} desempates`];
+		return [
+			`${filled(activity.game.words, "solution")} palabras`,
+			`${filled(activity.game.tiebreakers, "solution")} desempates`,
+		];
 	}
-	return [`${activity.game.words.length} palabras`, activity.game.approvedVariantId ? "cuadrícula aprobada" : "sin cuadrícula aprobada"];
+	return [`${filled(activity.game.words, "text")} palabras`, activity.game.approvedVariantId ? "cuadrícula aprobada" : "sin cuadrícula aprobada"];
 }
