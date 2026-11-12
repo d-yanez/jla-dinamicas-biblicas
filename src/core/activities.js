@@ -100,10 +100,10 @@ export async function publishActivity(db, id) {
 	const activity = await getActivity(db, id);
 	if (!activity) throw new Error("La actividad no existe.");
 	const sameGame = await listActivities(db, { type: activity.type });
-	// The activity this draft replaces is not "another published one": it is the target.
-	const validation = validateActivity(activity, {
-		publishedOfType: sameGame.filter((candidate) => candidate.id !== id && candidate.id !== activity.originId),
-	});
+	// Publishing replaces: nothing else can be published when this one lands, so the
+	// uniqueness of the published activity is not a reason to refuse. The loop below
+	// unpublishes whatever was published before.
+	const validation = validateActivity(activity);
 	if (!validation.ok) return { ok: false, errors: validation.errors };
 	const now = new Date().toISOString();
 	const origin = activity.originId ? sameGame.find((candidate) => candidate.id === activity.originId) : undefined;

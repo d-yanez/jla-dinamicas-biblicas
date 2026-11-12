@@ -873,6 +873,31 @@ try {
 		assert.ok((await page.locator(".sopa-grid__cell--solved").count()) > 0, "la solución revelada se pinta en la cuadrícula");
 	});
 
+	await step("publicar una segunda sopa reemplaza la publicada", async () => {
+		// It used to be refused with «ya hay una actividad publicada», even though the
+		// confirmation dialog promises the previous one stops being published and
+		// publishActivity already unpublishes it.
+		await page.getByRole("link", { name: /ir al inicio/u }).click();
+		await page.getByRole("link", { name: "Administrar" }).click();
+		await page.locator('input[inputmode="numeric"]').first().fill("5678");
+		await page.getByRole("button", { name: "Entrar" }).click();
+		// Duplicating the published one gives a complete draft without retyping ten words.
+		await page
+			.locator(".activity-row")
+			.filter({ hasText: "Sopa de letras: Ayuno y oración" })
+			.filter({ hasText: "Publicada" })
+			.getByRole("button", { name: "Duplicar" })
+			.click();
+		// A distinct name keeps the list readable and proves which one is published now.
+		await page.getByLabel("Nombre de la actividad").fill("Sopa de letras: El Desafío de la Cruz");
+		await page.getByRole("button", { name: "Publicar", exact: true }).click();
+		await page.locator("dialog").getByRole("button", { name: "Publicar", exact: true }).click();
+		await page.getByRole("heading", { name: "Actividades de sopa de letras" }).waitFor();
+		const publishedRows = page.locator(".activity-row").filter({ hasText: "Publicada" });
+		assert.equal(await publishedRows.count(), 1, "después de reemplazar tiene que quedar una sola publicada");
+		assert.match(await publishedRows.first().textContent(), /El Desafío de la Cruz/u, "la nueva actividad es la publicada");
+	});
+
 	await step("un navegador con la marca de siembra antigua recibe el ejemplo nuevo", async () => {
 		// Reproduce the reported state: the phase-2 global marker and only the sopa example.
 		await page.evaluate(async () => {

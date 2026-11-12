@@ -197,9 +197,9 @@ export function createDraftSession({ db, type }) {
 		async verifyRequirements() {
 			if (!state.draft) return;
 			await session.refreshList();
-			const published = state.activities.filter((activity) => activity.status === ACTIVITY_STATUS.PUBLISHED);
-			const result = validateActivity(state.draft, { publishedOfType: published });
-			state.requirements = result;
+			// No «already published» check here: publishing replaces the published activity of
+			// that game, so it is not a conflict to report before publishing.
+			state.requirements = validateActivity(state.draft);
 			emit("requirements");
 		},
 	};

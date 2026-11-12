@@ -119,12 +119,13 @@ test("validateActivity exige una variante aprobada que coincida con las palabras
 	assert.ok(stale.errors.some((error) => error.field === "game.approvedVariantId"));
 });
 
-test("solo puede haber una actividad publicada por juego", () => {
-	const published = { ...sopaDraft(), status: ACTIVITY_STATUS.PUBLISHED };
+test("publicar una actividad no se bloquea por otra ya publicada", () => {
+	// «Solo una publicada por juego» is enforced by publishing itself, which unpublishes the
+	// previous one, not by validation. Rejecting here made replacing a game's activity
+	// impossible: a brand-new activity has no originId, so the one it replaces counted as a
+	// conflict. The end-to-end replacement is covered by tests/browser-smoke.mjs.
 	const candidate = { ...sopaDraft(), status: ACTIVITY_STATUS.PUBLISHED };
-	const result = validateActivity(candidate, { publishedOfType: [published] });
-	assert.equal(result.ok, false);
-	assert.ok(result.errors.some((error) => /una actividad publicada/u.test(error.message)));
+	assert.equal(validateActivity(candidate).ok, true);
 });
 
 test("cambiar las palabras invalida las variantes y la aprobada", () => {

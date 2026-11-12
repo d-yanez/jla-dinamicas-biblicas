@@ -23,8 +23,6 @@ export const ROUND_SECONDS = Object.freeze({ min: 10, max: 120, default: 30 });
 
 export const PALABRAS_WORD_COUNT = 10;
 
-const TYPE_LABELS = Object.freeze({ sopa: "sopa de letras", palabras: "palabras desordenadas" });
-
 const TEXT_FIELDS = Object.freeze([
 	"name",
 	"theme",
@@ -377,7 +375,7 @@ export function duplicateAsDraft(activity) {
  * Strict publication validation. Every error names its field and says what to fix, and
  * the caller decides how to present them; nothing here mutates the activity.
  */
-export function validateActivity(activity, options = {}) {
+export function validateActivity(activity) {
 	const errors = [];
 	const push = (field, message) => errors.push({ field, message });
 	if (typeof activity !== "object" || activity === null) {
@@ -392,12 +390,11 @@ export function validateActivity(activity, options = {}) {
 	}
 	if (activity.type === ACTIVITY_TYPE.SOPA) validateSopa(activity, push);
 	if (activity.type === ACTIVITY_TYPE.PALABRAS) validatePalabras(activity, push);
-	const published = (options.publishedOfType ?? []).filter(
-		(candidate) => candidate && candidate.type === activity.type && candidate.status === ACTIVITY_STATUS.PUBLISHED && candidate.id !== activity.id,
-	);
-	if (published.length > 0) {
-		push("status", `Ya hay una actividad publicada de ${TYPE_LABELS[activity.type] ?? "este juego"}: solo puede haber una.`);
-	}
+	// «Solo una publicada por juego» is not a validation error: publishing is the operation
+	// that keeps the invariant, by unpublishing whatever was published before (see
+	// publishActivity). Rejecting here made replacing a game's activity impossible — a new
+	// activity has no originId, so the published one it was about to replace counted as a
+	// conflict. The bundled seed still enforces it in scripts/validate-seed.mjs.
 	return { ok: errors.length === 0, errors };
 }
 
