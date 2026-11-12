@@ -80,7 +80,27 @@ async function step(name, run) {
 const { server, baseUrl } = process.env.JLA_BASE_URL
 	? { server: undefined, baseUrl: process.env.JLA_BASE_URL }
 	: await startStaticServer();
-const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required"] });
+
+/**
+ * Playwright's own browser is the default. A machine that already has Chrome can run the
+ * same checks without downloading anything: `JLA_BROWSER_CHANNEL=chrome`.
+ */
+async function launchBrowser() {
+	const args = ["--autoplay-policy=no-user-gesture-required"];
+	const channel = (process.env.JLA_BROWSER_CHANNEL ?? "").trim();
+	try {
+		return await chromium.launch(channel ? { channel, args } : { args });
+	} catch (error) {
+		console.error(`No se pudo abrir el navegador: ${error.message}`);
+		console.error(
+			"Descargá el navegador de Playwright con `npx playwright install chromium`, o usá un Chrome ya instalado con `JLA_BROWSER_CHANNEL=chrome node tests/browser-smoke.mjs`.",
+		);
+		process.exitCode = 2;
+		process.exit();
+	}
+}
+
+const browser = await launchBrowser();
 const problems = [];
 
 try {
@@ -115,6 +135,9 @@ try {
 	// The engine ignores two advances closer than 300 ms on purpose: the smoke must pace
 	// its clicks like a person, not like a machine.
 	const settle = () => page.waitForTimeout(400);
+	// The autosave debounce is 800 ms. A fixed wait longer than it is honest here: these
+	// steps assert the outcome (what survived a reload), never the save indicator's text.
+	const settleSave = () => page.waitForTimeout(1400);
 	const enterAdmin = async () => page.getByRole("link", { name: "Administrar" }).click();
 
 	await step("la portada muestra dos tarjetas Jugar y el engranaje discreto", async () => {
@@ -399,6 +422,48 @@ try {
 		// Editing a word withdrew the approval; the grid is still there, so approve it again.
 		await page.getByRole("button", { name: "Aprobar esta variante", exact: true }).first().click();
 		await page.locator(".variant-strip").getByText("Aprobada", { exact: true }).waitFor();
+	});
+
+	await step("los campos comunes se guardan aunque se escriban después de un autoguardado", async () => {
+		// Every save replaces the draft object the editor was rendered from. A field handler
+		// bound to the old one wrote into a dead copy: only what was typed before the first
+		// save survived, and everything after it was lost without a single error.
+		await page.getByLabel("Tema bíblico").fill("Ayuno y oración");
+		await settleSave();
+		await page.getByLabel("Enseñanza").fill("Buscar a Dios con atención y humildad.");
+		await settleSave();
+		await page.reload();
+		await page.getByRole("heading", { name: "Panel de administración" }).waitFor();
+		await page.locator('input[inputmode="numeric"]').first().fill("5678");
+		await page.getByRole("button", { name: "Entrar" }).click();
+		await page.getByRole("button", { name: "Abrir" }).first().click();
+		await page.getByRole("heading", { name: "Sopa de letras: Ayuno y oración" }).waitFor();
+		assert.equal(await page.getByLabel("Tema bíblico").inputValue(), "Ayuno y oración");
+		assert.equal(
+			await page.getByLabel("Enseñanza").inputValue(),
+			"Buscar a Dios con atención y humildad.",
+			"la edición posterior al autoguardado tiene que persistir",
+		);
+	});
+
+	await step("agregar una palabra vacía la deja visible y se puede completar", async () => {
+		// The row used to be dropped by the save while the DOM kept showing it, so every
+		// keystroke after it landed on an index that no longer existed.
+		await page.getByRole("button", { name: "Volver a la lista" }).click();
+		await page.getByRole("button", { name: "Nueva actividad" }).click();
+		await page.getByRole("button", { name: "Agregar palabra" }).click();
+		assert.equal(await page.locator(".word-row").count(), 1);
+		await settleSave();
+		await page.locator('input[aria-label="Palabra 1"]').fill("Fe");
+		await settleSave();
+		await page.getByRole("button", { name: "Agregar palabra" }).click();
+		assert.equal(await page.locator(".word-row").count(), 2, "la segunda fila se tiene que sumar");
+		assert.equal(
+			await page.locator('input[aria-label="Palabra 1"]').inputValue(),
+			"Fe",
+			"la primera palabra no puede desaparecer al agregar la siguiente",
+		);
+		await page.getByRole("button", { name: "Volver a la lista" }).click();
 	});
 
 	await step("el ejemplo de palabras desordenadas aparece como borrador con desempates", async () => {
@@ -778,7 +843,12 @@ try {
 		await page.getByRole("link", { name: "Administrar" }).click();
 		await page.locator('input[inputmode="numeric"]').first().fill("5678");
 		await page.getByRole("button", { name: "Entrar" }).click();
-		await page.getByRole("button", { name: "Abrir" }).first().click();
+		// Select by name: the list may hold other drafts, and list order is not a contract.
+		await page
+			.locator(".activity-row")
+			.filter({ hasText: "Sopa de letras: Ayuno y oración" })
+			.getByRole("button", { name: "Abrir" })
+			.click();
 		await page.getByRole("heading", { name: "Sopa de letras: Ayuno y oración", exact: true }).waitFor();
 		await page.getByRole("button", { name: "Publicar", exact: true }).click();
 		await page.locator("dialog").getByRole("button", { name: "Publicar", exact: true }).click();

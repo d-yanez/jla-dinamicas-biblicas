@@ -118,7 +118,10 @@ test("normalizeActivity reconstruye las palabras de este juego", () => {
 		},
 	});
 	assert.equal(stored.type, "palabras");
-	assert.deepEqual(stored.game.words.map((word) => word.normalized), ["ORACION", "FE"]);
+	// The row with an empty solution is kept — it may be a row the editor just added —
+	// but it carries no normalized form, so nothing can mistake it for a valid word.
+	assert.deepEqual(stored.game.words.map((word) => word.normalized), ["ORACION", undefined, "FE"]);
+	assert.equal(stored.game.words[1].solution, "", "la fila vacía conserva su texto para poder completarse");
 	assert.deepEqual(stored.game.words[0].hints, ["una"]);
 	assert.deepEqual(stored.game.words[1].hints, []);
 	assert.equal(stored.game.tiebreakers.length, 1);

@@ -211,3 +211,54 @@ test("corregir la palabra devuelve la cuadrícula aprobada sin regenerar", () =>
 	assert.equal(reverted.game.words[9].normalized, "PERSEVERANCIA");
 	assert.equal(reverted.game.variants[0].id, activity.game.variants[0].id, "es la misma cuadrícula, no una nueva");
 });
+
+// --- A row the moderator just added must survive the autosave -------------------------
+//
+// The editor pushes an empty row and saves it 800 ms later. Dropping the row at the
+// storage boundary made the new input disappear from the draft while the DOM kept
+// showing it, so every keystroke after that landed on an index that no longer existed.
+
+test("una palabra vacía recién agregada sobrevive al guardado de la sopa", () => {
+	const activity = createActivity({ type: ACTIVITY_TYPE.SOPA, name: "Nueva" });
+	activity.game.words = [...wordsOf(), { id: "w11", text: "" }];
+	const saved = normalizeActivity(refreshDerivedState(activity));
+	assert.deepEqual(
+		saved.game.words.map((word) => word.text),
+		[...WORDS, ""],
+		"la fila nueva tiene que volver del guardado para que se pueda completar",
+	);
+	assert.equal(saved.game.words[10].normalized, undefined, "una fila vacía no puede pasar por palabra válida");
+});
+
+test("una fila vacía recién agregada sobrevive al guardado de palabras desordenadas", () => {
+	const activity = createActivity({ type: ACTIVITY_TYPE.PALABRAS, name: "Nueva" });
+	activity.game.words = [
+		{ id: "p1", solution: "Fe", anagram: "Ef" },
+		{ id: "p2", solution: "", anagram: "" },
+	];
+	const saved = normalizeActivity(refreshDerivedState(activity));
+	assert.deepEqual(
+		saved.game.words.map((word) => word.solution),
+		["Fe", ""],
+	);
+	assert.deepEqual(saved.game.words[1].reveals, [], "una fila vacía no revela nada");
+});
+
+test("una fila vacía no vuelve publicable la actividad", () => {
+	const activity = sopaDraft();
+	activity.game.words = activity.game.words.map((word, index) => (index === 3 ? { ...word, text: "" } : word));
+	const result = validateActivity(activity);
+	assert.equal(result.ok, false, "conservar la fila no puede abrir la puerta a publicar una sopa incompleta");
+	assert.ok(result.errors.some((error) => error.field === "game.words" && /la palabra 4 no es válida/iu.test(error.message)));
+});
+
+test("entre las palabras, lo que no es una fila se sigue descartando", () => {
+	const activity = createActivity({ type: ACTIVITY_TYPE.SOPA, name: "Nueva" });
+	activity.game.words = [...wordsOf(), null, 42, "Fe", { id: "w11", text: "" }];
+	const saved = normalizeActivity(activity);
+	assert.deepEqual(
+		saved.game.words.map((word) => word.text),
+		[...WORDS, ""],
+		"solo las filas reales sobreviven: ni null, ni números, ni texto suelto",
+	);
+});

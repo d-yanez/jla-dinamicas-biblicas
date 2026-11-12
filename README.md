@@ -40,14 +40,14 @@ Funciona igual publicado en una subruta porque:
 ## Verificar antes de usar
 
 ```bash
-# 157 pruebas unitarias de la lógica pura (Node 22+, sin dependencias)
+# 188 pruebas unitarias de la lógica pura (Node 22+, sin dependencias)
 node --test tests/*.test.mjs
 
-# 45 verificaciones funcionales en un navegador real (Playwright, opcional)
+# 55 verificaciones funcionales en un navegador real (Playwright, opcional)
 node tests/browser-smoke.mjs
 ```
 
-El segundo comando es una herramienta de desarrollo: levanta su propio servidor estático, recorre el flujo completo de fase 1 y falla si la consola del navegador registra un error. Requiere Playwright instalado (`npm i -g playwright && playwright install chromium`); **la aplicación publicada no lo usa**.
+El segundo comando es una herramienta de desarrollo: levanta su propio servidor estático, recorre el flujo completo de fase 1 y falla si la consola del navegador registra un error. Requiere Playwright instalado (`npm i -g playwright && playwright install chromium`); **la aplicación publicada no lo usa**. Si en la máquina ya hay un Chrome y preferís no descargar el navegador de Playwright, elegilo con `JLA_BROWSER_CHANNEL=chrome node tests/browser-smoke.mjs`.
 
 Para validar el sitio ya publicado, apuntalo a la URL real:
 
