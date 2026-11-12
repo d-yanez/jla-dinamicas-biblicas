@@ -898,6 +898,31 @@ try {
 		assert.match(await publishedRows.first().textContent(), /El Desafío de la Cruz/u, "la nueva actividad es la publicada");
 	});
 
+	await step("una publicada se despublica desde el borrador que la edita", async () => {
+		// «Despublicar» used to be unreachable: opening a published activity always opens a
+		// derived draft, and the button only showed for a draft that was itself published.
+		const publishedRow = page.locator(".activity-row").filter({ hasText: "Publicada" });
+		assert.equal(
+			await publishedRow.getByRole("button", { name: "Eliminar" }).isDisabled(),
+			true,
+			"una actividad publicada no se elimina por accidente",
+		);
+		await publishedRow.getByRole("button", { name: "Abrir" }).click();
+		await page.getByRole("heading", { name: "Sopa de letras: El Desafío de la Cruz" }).waitFor();
+		await page.getByRole("button", { name: "Despublicar", exact: true }).click();
+		await page.locator("dialog").getByRole("button", { name: "Despublicar", exact: true }).click();
+		await page.getByRole("heading", { name: "Actividades de sopa de letras" }).waitFor();
+		assert.equal(await page.locator(".activity-row").filter({ hasText: "Publicada" }).count(), 0, "ya no queda ninguna publicada");
+	});
+
+	await step("eliminar un borrador lo saca de la lista", async () => {
+		const row = page.locator(".activity-row").filter({ hasText: "Actividad sin nombre" });
+		await row.waitFor();
+		await row.getByRole("button", { name: "Eliminar" }).click();
+		await page.locator("dialog").getByRole("button", { name: "Eliminar", exact: true }).click();
+		await page.locator(".activity-row").filter({ hasText: "Actividad sin nombre" }).waitFor({ state: "detached" });
+	});
+
 	await step("un navegador con la marca de siembra antigua recibe el ejemplo nuevo", async () => {
 		// Reproduce the reported state: the phase-2 global marker and only the sopa example.
 		await page.evaluate(async () => {

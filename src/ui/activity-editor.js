@@ -228,6 +228,18 @@ export function mountActivityEditor({ db, type, renderGame }) {
 		if (confirmed) await session.unpublish();
 	}
 
+	/** The only destructive action in the panel, so it says exactly what it removes. */
+	async function removeActivity(activity) {
+		const confirmed = await confirmDialog({
+			title: "¿Eliminar esta actividad?",
+			message: `«${activityName(activity)}» se borra de este dispositivo y no se puede deshacer.`,
+			confirmLabel: "Eliminar",
+			cancelLabel: "Cancelar",
+			danger: true,
+		});
+		if (confirmed) await session.remove(activity.id);
+	}
+
 	function renderEditor() {
 		const draft = session.state.draft;
 		clear(root);
@@ -260,7 +272,7 @@ export function mountActivityEditor({ db, type, renderGame }) {
 						"div",
 						{ class: "row" },
 						nodes.indicator,
-						draft.status === ACTIVITY_STATUS.PUBLISHED
+						draft.status === ACTIVITY_STATUS.PUBLISHED || draft.originId
 							? el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => void unpublish() }, "Despublicar")
 							: el("button", { class: "btn btn--primary btn--small", type: "button", onclick: () => void publish() }, "Publicar"),
 						el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => void session.flush() }, "Guardar ahora"),
@@ -317,6 +329,21 @@ export function mountActivityEditor({ db, type, renderGame }) {
 										{ class: "row" },
 										el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => void session.open(activity.id) }, "Abrir"),
 										el("button", { class: "btn btn--ghost btn--small", type: "button", onclick: () => void session.duplicate(activity) }, "Duplicar"),
+										el(
+											"button",
+											{
+												class: "btn btn--danger btn--small",
+												type: "button",
+												// Removing the activity the group is playing must not be a one-click accident.
+												disabled: activity.status === ACTIVITY_STATUS.PUBLISHED,
+												title:
+												activity.status === ACTIVITY_STATUS.PUBLISHED
+													? "Está publicada: despublicá la actividad antes de eliminarla."
+													: "Eliminar esta actividad de este dispositivo.",
+												onclick: () => void removeActivity(activity),
+											},
+											"Eliminar",
+										),
 									),
 								),
 							),

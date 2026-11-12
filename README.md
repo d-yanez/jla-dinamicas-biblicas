@@ -43,7 +43,7 @@ Funciona igual publicado en una subruta porque:
 # 188 pruebas unitarias de la lógica pura (Node 22+, sin dependencias)
 node --test tests/*.test.mjs
 
-# 55 verificaciones funcionales en un navegador real (Playwright, opcional)
+# 58 verificaciones funcionales en un navegador real (Playwright, opcional)
 node tests/browser-smoke.mjs
 ```
 
@@ -65,7 +65,7 @@ Qué cubre la verificación de navegador: portada y tarjetas, `Jugar` sin activi
 - **Diez ubicaciones verificadas**: cada palabra guarda inicio, fin y una de las ocho direcciones (horizontales, verticales y las cuatro diagonales, en ambos sentidos). La app **vuelve a leer** cada camino sobre la cuadrícula guardada antes de aceptarlo.
 - **Variantes previsualizables**: se generan tres cuadrículas por semilla, cada una se puede ver resuelta con colores y con la tabla de coordenadas del moderador, y solo una queda **aprobada**.
 - **La cuadrícula nunca se regenera**: se guarda como dato con su semilla. Jugar, imprimir, recargar o restaurar no pueden cambiarla. Si las palabras cambian, las variantes se descartan y la app lo avisa.
-- **Requisitos antes de publicar**: nombre, tema, instrucciones, duración entre 10 y 120 segundos, diez palabras válidas y sin repetir, y una variante aprobada que coincida con esas palabras. Los errores se listan uno por uno. Publicar llega en la fase 7.
+- **Requisitos antes de publicar**: nombre, tema, instrucciones, duración entre 10 y 120 segundos, diez palabras válidas y sin repetir, y una variante aprobada que coincida con esas palabras. Los errores se listan uno por uno. Publicar reemplaza la actividad publicada de ese juego: puede quedar una sola, y la anterior pasa a borrador.
 
 ## El PIN: qué protege y qué no
 

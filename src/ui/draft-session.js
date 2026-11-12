@@ -5,7 +5,7 @@
 // editors cannot drift apart — least of all in the part that writes data.
 
 import { ACTIVITY_STATUS, validateActivity } from "../core/activity-model.js";
-import { ensureEditableDraft, getActivity, listActivities, publishActivity, saveActivity, unpublishActivity } from "../core/activities.js";
+import { deleteActivity, ensureEditableDraft, getActivity, listActivities, publishActivity, saveActivity, unpublishActivity } from "../core/activities.js";
 import { createActivity } from "../core/activity-model.js";
 
 const SAVE_DELAY_MS = 800;
@@ -188,11 +188,27 @@ export function createDraftSession({ db, type }) {
 		async unpublish() {
 			if (!state.draft) return undefined;
 			await session.flush();
-			const unpublished = await unpublishActivity(db, state.draft.id);
-			state.draft = unpublished;
+			// A derived draft edits the published activity: unpublishing acts on that one, never
+			// on the scratch copy. Back to the list, where the change is visible and the two rows
+			// cannot be confused for each other.
+			const targetId = state.draft.originId || state.draft.id;
+			const unpublished = await unpublishActivity(db, targetId);
+			state.draft = undefined;
+			selection.delete(type);
 			await session.refreshList();
 			emit("open");
 			return unpublished;
+		},
+		async remove(id) {
+			// Deleting the open draft must not leave a write queued for a row that no longer exists.
+			if (id === state.draft?.id) {
+				window.clearTimeout(saveTimer);
+				state.draft = undefined;
+				selection.delete(type);
+			}
+			await deleteActivity(db, id);
+			await session.refreshList();
+			emit("open");
 		},
 		async verifyRequirements() {
 			if (!state.draft) return;

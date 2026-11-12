@@ -131,6 +131,17 @@ export async function publishActivity(db, id) {
 	return { ok: true, activity: published };
 }
 
+/**
+ * Deletes an activity from this device.
+ *
+ * It is the only destructive action in the panel, so the caller confirms it. Being published
+ * is not a reason to keep it, but it is a reason to unpublish first: the editor disables the
+ * action for a published row so nobody removes the game the group is playing by accident.
+ */
+export async function deleteActivity(db, id) {
+	await removeRow(db, ACTIVITIES_STORE, id);
+}
+
 /** Unpublishing keeps the content: it only stops being the game the public plays. */
 export async function unpublishActivity(db, id) {
 	const activity = await getActivity(db, id);
